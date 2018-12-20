@@ -54,7 +54,7 @@ uint32_t string_to_asset_num( const char* p, uint8_t decimals )
                FC_ASSERT( decimals == 6, "Incorrect decimal places" );
                asset_num = STEEM_ASSET_NUM_VESTS;
                break;
-            default:
+	    default:
                FC_ASSERT( false, "Cannot parse asset symbol" );
          }
          break;
@@ -93,9 +93,9 @@ std::string asset_num_to_string( uint32_t asset_num )
          return "TBD";
 #else
       case STEEM_ASSET_NUM_STEEM:
-         return "STEEM";
+         return "EFTG";
       case STEEM_ASSET_NUM_SBD:
-         return "SBD";
+         return "EUR";
 #endif
       case STEEM_ASSET_NUM_VESTS:
          return "VESTS";
