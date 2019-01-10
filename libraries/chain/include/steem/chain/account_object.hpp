@@ -6,6 +6,7 @@
 
 #include <steem/chain/steem_object_types.hpp>
 #include <steem/chain/witness_objects.hpp>
+#include <steem/chain/owner_object.hpp>
 #include <steem/chain/shared_authority.hpp>
 
 #include <boost/multi_index/composite_key.hpp>

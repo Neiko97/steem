@@ -3,6 +3,7 @@
 #include <steem/chain/custom_operation_interpreter.hpp>
 #include <steem/chain/steem_objects.hpp>
 #include <steem/chain/witness_objects.hpp>
+#include <steem/chain/owner_object.hpp>
 #include <steem/chain/block_summary_object.hpp>
 
 #include <steem/chain/util/reward.hpp>
@@ -488,6 +489,32 @@ void account_update_evaluator::do_apply( const account_update_operation& o )
       });
    }
 
+}
+
+
+void owner_create_evaluator::do_apply( const owner_create_operation& o )
+{
+   //FC_ASSERT( _db.has_hardfork( EFTG_HARDFORK_0_1 ) , "This operation is available after EFTG HF 1" )
+      
+   _db.get_account( o.creator ); // verify creator exists
+   _db.get_account( o.owner ); // verify owner exists   
+   
+   const auto& by_owner_name_idx = _db.get_index< owner_index >().indices().get< by_name >();
+   auto owner_itr = by_owner_name_idx.find( o.owner );
+   auto creator_itr = by_owner_name_idx.find( o.creator );
+
+   FC_ASSERT( creator_itr != by_owner_name_idx.end() , "The creator must be an Owner" );   
+   FC_ASSERT( owner_itr == by_owner_name_idx.end() , "This is already an Owner" );
+   
+   const auto& props = _db.get_dynamic_global_properties();
+   
+   _db.create< owner_object >( [&]( owner_object& owner )
+   {
+      owner.creator = o.creator;
+      owner.owner = o.owner;
+      owner.signing_key = o.signing_key;
+      owner.created = props.time;      
+   });   
 }
 
 

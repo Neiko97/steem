@@ -17,6 +17,7 @@
 #include <steem/chain/shared_db_merkle.hpp>
 #include <steem/chain/operation_notification.hpp>
 #include <steem/chain/witness_schedule.hpp>
+#include <steem/chain/owner_object.hpp> //todo: necessary?
 
 #include <steem/chain/util/asset.hpp>
 #include <steem/chain/util/reward.hpp>
@@ -2404,6 +2405,7 @@ void database::initialize_evaluators()
    _my->_evaluator_registry.register_evaluator< set_withdraw_vesting_route_evaluator     >();
    _my->_evaluator_registry.register_evaluator< account_create_evaluator                 >();
    _my->_evaluator_registry.register_evaluator< account_update_evaluator                 >();
+   _my->_evaluator_registry.register_evaluator< owner_create_evaluator                   >();
    _my->_evaluator_registry.register_evaluator< witness_update_evaluator                 >();
    _my->_evaluator_registry.register_evaluator< account_witness_vote_evaluator           >();
    _my->_evaluator_registry.register_evaluator< account_witness_proxy_evaluator          >();
@@ -2474,6 +2476,7 @@ void database::initialize_indexes()
    add_core_index< account_index                           >(*this);
    add_core_index< account_authority_index                 >(*this);
    add_core_index< witness_index                           >(*this);
+   add_core_index< owner_index                             >(*this);
    add_core_index< transaction_index                       >(*this);
    add_core_index< block_summary_index                     >(*this);
    add_core_index< witness_schedule_index                  >(*this);
@@ -2648,6 +2651,13 @@ void database::init_genesis( uint64_t init_supply )
             w.owner        = STEEM_INIT_MINER_NAME + ( i ? fc::to_string(i) : std::string() );
             w.signing_key  = init_public_key;
             w.schedule = witness_object::miner;
+         } );
+         
+         create< owner_object >( [&]( owner_object& owner )
+         {
+            owner.creator = "";
+            owner.owner = STEEM_INIT_MINER_NAME;
+            owner.signing_key = init_public_key;
          } );
       }
 

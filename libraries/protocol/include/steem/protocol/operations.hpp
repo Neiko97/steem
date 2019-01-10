@@ -78,6 +78,10 @@ namespace steem { namespace protocol {
             smt_set_runtime_parameters_operation,
             smt_create_operation,
 #endif
+
+            /// EFTG operations
+            owner_create_operation,
+
             /// virtual operations below this point
             fill_convert_request_operation,
             author_reward_operation,

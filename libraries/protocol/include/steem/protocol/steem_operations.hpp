@@ -63,6 +63,26 @@ namespace steem { namespace protocol {
       void get_required_active_authorities( flat_set<account_name_type>& a )const
       { if( !owner ) a.insert( account ); }
    };
+   
+   
+   /**
+    *  Owner is a new type of account that stablishes a
+    *  hierarchical governance inside the blockchain, for
+    *  the purposes of the European Commision.
+    *
+    *  Only owners can create new owners.
+    *
+    *  There is no fee in the process.  
+    */
+   struct owner_create_operation : public base_operation
+   {
+      account_name_type creator;
+      account_name_type owner;
+      public_key_type   signing_key;
+      
+      void validate()const;
+      void get_required_active_authorities( flat_set<account_name_type>& a )const{ a.insert(creator); }
+   };
 
 
    struct comment_operation : public base_operation
@@ -521,7 +541,8 @@ namespace steem { namespace protocol {
             a.push_back( authority( 1, STEEM_NULL_ACCOUNT, 1 ) ); // The null account auth is impossible to satisfy
       }
    };
-
+   
+   
    /**
     * All accounts with a VFS can vote for or against any witness.
     *
@@ -1109,6 +1130,11 @@ FC_REFLECT( steem::protocol::account_update_operation,
             (posting)
             (memo_key)
             (json_metadata) )
+            
+FC_REFLECT( steem::protocol::owner_create_operation,
+            (creator)
+            (owner)
+            (signing_key) )            
 
 FC_REFLECT( steem::protocol::transfer_operation, (from)(to)(amount)(memo) )
 FC_REFLECT( steem::protocol::transfer_to_vesting_operation, (from)(to)(amount) )

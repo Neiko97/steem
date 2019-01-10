@@ -66,7 +66,12 @@ namespace steem { namespace protocol {
          FC_ASSERT( fc::json::is_valid(json_metadata), "JSON Metadata not valid JSON" );
       }
    }
-
+   
+   void owner_create_operation::validate() const
+   {
+      validate_account_name( owner );   
+   }
+   
    void comment_operation::validate() const
    {
       FC_ASSERT( title.size() < 256, "Title larger than size limit" );
