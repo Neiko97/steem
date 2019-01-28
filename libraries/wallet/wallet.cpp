@@ -350,6 +350,13 @@ public:
       FC_ASSERT( !accounts.empty(), "Unknown account" );
       return accounts.front();
    }
+   
+   condenser_api::api_owner_object get_owner( string owner_name ) const
+   {
+      auto owners = _remote_api->get_owners( { owner_name } );
+      FC_ASSERT( !owners.empty(), "Unknown account" );
+      return owners.front();
+   }
 
    string get_wallet_filename() const { return _wallet_filename; }
 
@@ -1005,6 +1012,11 @@ condenser_api::api_account_object wallet_api::get_account( string account_name )
    return my->get_account( account_name );
 }
 
+condenser_api::api_owner_object wallet_api::get_owner( string owner_name ) const
+{
+   return my->get_owner( owner_name );
+}
+
 bool wallet_api::import_key(string wif_key)
 {
    FC_ASSERT(!is_locked());
@@ -1187,6 +1199,28 @@ pair<public_key_type,string> wallet_api::get_private_key_from_password( string a
 }
 
 condenser_api::api_feed_history_object wallet_api::get_feed_history()const { return my->_remote_api->get_feed_history(); }
+
+/**
+ * This method is used to upgrade an account to owner
+ */
+condenser_api::legacy_signed_transaction wallet_api::create_owner(
+   string creator,
+   string owner,
+   public_key_type signing_key,
+   bool broadcast )const
+{ try {
+   FC_ASSERT( !is_locked() );
+   owner_create_operation op;
+   op.creator = creator;
+   op.owner = owner;
+   op.signing_key = signing_key;
+   
+   signed_transaction tx;
+   tx.operations.push_back(op);
+   tx.validate();
+
+   return my->sign_transaction( tx, broadcast );
+} FC_CAPTURE_AND_RETHROW( (creator)(owner)(signing_key)(broadcast) ) }
 
 /**
  * This method is used by faucets to create new accounts for other users which must
@@ -1615,6 +1649,20 @@ condenser_api::legacy_signed_transaction wallet_api::delegate_vesting_shares(
 
    return my->sign_transaction( tx, broadcast );
 }
+
+/**
+ *  This method will upgrade an account to owner
+ *  REMOVE Repeated
+ */
+/*condenser_api::legacy_signed_transaction wallet_api::create_owner(
+   string creator,
+   string owner,
+   public_key_type signing_key,
+   bool broadcast )
+{ try {
+   FC_ASSERT( !is_locked() );
+   return create_owner( creator, owner, signing_key, broadcast );
+} FC_CAPTURE_AND_RETHROW( (creator)(owner)(signing_key) ) }*/
 
 /**
  *  This method will genrate new owner, active, and memo keys for the new account which

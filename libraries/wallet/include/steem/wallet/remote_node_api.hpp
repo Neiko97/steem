@@ -39,6 +39,7 @@ struct remote_node_api
    condenser_api::api_reward_fund_object get_reward_fund( string );
    vector< vector< account_name_type > > get_key_references( vector< public_key_type > );
    vector< condenser_api::extended_account > get_accounts( vector< account_name_type > );
+   vector< condenser_api::api_owner_object > get_owners( vector< account_name_type > );
    vector< account_id_type > get_account_references( account_id_type account_id );
    vector< optional< condenser_api::api_account_object > > lookup_account_names( vector< account_name_type > );
    vector< account_name_type > lookup_accounts( account_name_type, uint32_t );
@@ -130,6 +131,7 @@ FC_API( steem::wallet::remote_node_api,
         (get_reward_fund)
         (get_key_references)
         (get_accounts)
+        (get_owners)
         (get_account_references)
         (lookup_account_names)
         (lookup_accounts)

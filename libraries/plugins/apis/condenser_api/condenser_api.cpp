@@ -66,6 +66,7 @@ namespace detail
             (get_reward_fund)
             (get_key_references)
             (get_accounts)
+            (get_owners)
             (get_account_references)
             (lookup_account_names)
             (lookup_accounts)
@@ -853,6 +854,27 @@ namespace detail
       FC_ASSERT( _account_by_key_api, "account_history_api_plugin not enabled." );
 
       return _account_by_key_api->get_key_references( { args[0].as< vector< public_key_type > >() } ).accounts;
+   }
+   
+   DEFINE_API_IMPL( condenser_api_impl, get_owners )
+   {
+      CHECK_ARG_SIZE(1)
+      vector< account_name_type > names = args[0].as< vector< account_name_type > >();
+      
+      const auto& idx = _db.get_index< owner_index >().indices().get< by_name >();
+      vector< api_owner_object > results;
+      results.reserve(names.size());
+      
+      for( const auto& name: names )
+      {
+         auto itr = idx.find( name );
+         if ( itr != idx.end() )
+         {
+            results.emplace_back( api_owner_object( database_api::api_owner_object( *itr ) ) );
+         }
+      }
+      
+      return results;
    }
 
    DEFINE_API_IMPL( condenser_api_impl, get_accounts )
@@ -2202,6 +2224,7 @@ DEFINE_READ_APIS( condenser_api,
    (get_reward_fund)
    (get_key_references)
    (get_accounts)
+   (get_owners)
    (lookup_account_names)
    (lookup_accounts)
    (get_account_count)

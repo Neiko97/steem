@@ -445,6 +445,31 @@ namespace steem { namespace plugins { namespace condenser_api {
       api_chain_properties    props;
       legacy_asset            fee;
    };
+   
+   struct legacy_owner_create_operation
+   {
+      legacy_owner_create_operation() {}
+      legacy_owner_create_operation( const owner_create_operation& op ) :
+         creator( op.creator ),
+         owner( op.owner ),
+         signing_key( op.signing_key )         
+      {
+         
+      }
+
+      operator owner_create_operation()const
+      {
+         owner_create_operation op;
+         op.creator = creator;
+         op.owner = owner;
+         op.signing_key = signing_key;
+         return op;
+      }
+
+      account_name_type       creator;
+      account_name_type       owner;
+      public_key_type         signing_key;      
+   };
 
    struct legacy_feed_publish_operation
    {
@@ -991,6 +1016,7 @@ namespace steem { namespace plugins { namespace condenser_api {
             legacy_account_create_operation,
             legacy_account_update_operation,
             legacy_witness_update_operation,
+            legacy_owner_create_operation,
             legacy_account_witness_vote_operation,
             legacy_account_witness_proxy_operation,
             legacy_pow_operation,
@@ -1120,6 +1146,12 @@ namespace steem { namespace plugins { namespace condenser_api {
       bool operator()( const witness_update_operation& op )const
       {
          l_op = legacy_witness_update_operation( op );
+         return true;
+      }
+      
+      bool operator()( const owner_create_operation& op )const
+      {
+         l_op = legacy_owner_create_operation( op );
          return true;
       }
 
@@ -1311,6 +1343,11 @@ struct convert_from_legacy_operation_visitor
    operation operator()( const legacy_witness_update_operation& op )const
    {
       return operation( witness_update_operation( op ) );
+   }
+   
+   operation operator()( const legacy_owner_create_operation& op )const
+   {
+      return operation( owner_create_operation( op ) );
    }
 
    operation operator()( const legacy_comment_options_operation& op )const
@@ -1529,6 +1566,7 @@ FC_REFLECT( steem::plugins::condenser_api::legacy_transfer_operation, (from)(to)
 FC_REFLECT( steem::plugins::condenser_api::legacy_transfer_to_vesting_operation, (from)(to)(amount) )
 FC_REFLECT( steem::plugins::condenser_api::legacy_withdraw_vesting_operation, (account)(vesting_shares) )
 FC_REFLECT( steem::plugins::condenser_api::legacy_witness_update_operation, (owner)(url)(block_signing_key)(props)(fee) )
+FC_REFLECT( steem::plugins::condenser_api::legacy_owner_create_operation, (creator)(owner)(signing_key) )
 FC_REFLECT( steem::plugins::condenser_api::legacy_limit_order_create_operation, (owner)(orderid)(amount_to_sell)(min_to_receive)(fill_or_kill)(expiration) )
 FC_REFLECT( steem::plugins::condenser_api::legacy_limit_order_create2_operation, (owner)(orderid)(amount_to_sell)(exchange_rate)(fill_or_kill)(expiration) )
 FC_REFLECT( steem::plugins::condenser_api::legacy_comment_options_operation, (author)(permlink)(max_accepted_payout)(percent_steem_dollars)(allow_votes)(allow_curation_rewards)(extensions) )

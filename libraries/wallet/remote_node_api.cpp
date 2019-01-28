@@ -94,6 +94,11 @@ vector< condenser_api::extended_account > remote_node_api::get_accounts( vector<
    FC_ASSERT( false );
 }
 
+vector< condenser_api::api_owner_object > remote_node_api::get_owners( vector< account_name_type > )
+{
+   FC_ASSERT( false );
+}
+
 vector< account_id_type > remote_node_api::get_account_references( account_id_type account_id )
 {
    FC_ASSERT( false );

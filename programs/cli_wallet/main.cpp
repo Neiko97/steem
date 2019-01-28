@@ -80,9 +80,9 @@ int main( int argc, char** argv )
          ("daemon,d", "Run the wallet in daemon mode" )
          ("rpc-http-allowip", bpo::value<vector<string>>()->multitoken(), "Allows only specified IPs to connect to the HTTP endpoint" )
          ("wallet-file,w", bpo::value<string>()->implicit_value("wallet.json"), "wallet to load")
-#ifdef IS_TEST_NET
+//#ifdef IS_TEST_NET
          ("chain-id", bpo::value< std::string >()->implicit_value( STEEM_CHAIN_ID_NAME ), "chain ID to connect to")
-#endif
+//#endif
          ;
       vector<string> allowed_ips;
 
@@ -102,10 +102,10 @@ int main( int argc, char** argv )
 
       steem::protocol::chain_id_type _steem_chain_id;
 
-#ifdef IS_TEST_NET
+//#ifdef IS_TEST_NET
       if( options.count("chain-id") )
             _steem_chain_id = generate_chain_id( options["chain-id"].as< std::string >() );
-#endif
+//#endif
 
       fc::path data_dir;
       fc::logging_config cfg;

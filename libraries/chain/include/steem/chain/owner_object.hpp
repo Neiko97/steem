@@ -9,6 +9,10 @@
 
 namespace steem { namespace chain {
 
+   using steem::protocol::public_key_type;
+   using steem::protocol::asset;
+   using steem::protocol::asset_symbol_type;
+   
    /**
     *  Owner is a new type of account that stablishes a
     *  hierarchical governance inside the blockchain, for

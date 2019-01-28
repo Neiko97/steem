@@ -1,5 +1,6 @@
 #pragma once
 #include <steem/chain/account_object.hpp>
+#include <steem/chain/owner_object.hpp>
 #include <steem/chain/block_summary_object.hpp>
 #include <steem/chain/comment_object.hpp>
 #include <steem/chain/global_property_object.hpp>
@@ -156,6 +157,29 @@ struct api_comment_vote_object
    int16_t              vote_percent = 0;
    time_point_sec       last_update;
    int8_t               num_changes = 0;
+};
+
+struct api_owner_object
+{
+   api_owner_object( const owner_object& o ) :
+      id( o.id ),
+      owner( o.owner ),
+      created( o.created ),
+      creator( o.creator ),
+      signing_key( o.signing_key ),
+      role( o.role ),
+      backed_sbd( o.backed_sbd )
+   {}
+   
+   api_owner_object() {}
+   
+   owner_id_type                 id;
+   account_name_type             owner;
+   time_point_sec                created;
+   account_name_type             creator;
+   public_key_type               signing_key;
+   owner_object::owner_role_type role;
+   asset                         backed_sbd;
 };
 
 struct api_account_object

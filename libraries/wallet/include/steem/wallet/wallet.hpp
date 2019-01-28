@@ -180,6 +180,13 @@ class wallet_api
        * @returns the public account data stored in the blockchain
        */
       condenser_api::api_account_object get_account( string account_name ) const;
+      
+      /** Returns information about the given owner.
+       *
+       * @param owner_name the name of the owner to provide information about
+       * @returns the public owner data stored in the blockchain
+       */
+      condenser_api::api_owner_object get_owner( string owner_name ) const;
 
       /** Returns the current wallet filename.
        *
@@ -335,7 +342,17 @@ class wallet_api
        * @returns the brain key in its normalized form
        */
       string normalize_brain_key(string s) const;
-
+      
+      /**
+       *  This method will upgrade an account to an owner. The creator must be an owner
+       *
+       *  @param creator The account creating the new owner
+       *  @param owner The name of the account to be upgraded
+       *  @param signing_key public signing_key for the new owner
+       *  @param broadcast true if you wish to broadcast the transaction
+       */
+      condenser_api::legacy_signed_transaction create_owner( string creator, string owner, public_key_type signing_key, bool broadcast ) const;
+      
       /**
        *  This method will genrate new owner, active, and memo keys for the new account which
        *  will be controlable by this wallet. There is a fee associated with account creation
@@ -1109,6 +1126,7 @@ FC_API( steem::wallet::wallet_api,
         (list_witnesses)
         (get_witness)
         (get_account)
+        (get_owner)
         (get_block)
         (get_ops_in_block)
         (get_feed_history)
@@ -1118,6 +1136,7 @@ FC_API( steem::wallet::wallet_api,
         (get_withdraw_routes)
 
         /// transaction api
+        (create_owner)
         (create_account)
         (create_account_with_keys)
         (create_account_delegated)

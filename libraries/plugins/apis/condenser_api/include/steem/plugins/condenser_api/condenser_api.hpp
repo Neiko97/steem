@@ -251,6 +251,29 @@ struct extended_account : public api_account_object
    optional< vector< string > >                             recommended;      /// posts recommened for this user
 };
 
+struct api_owner_object
+{
+   api_owner_object( const database_api::api_owner_object& o):
+      id( o.id ),
+      owner( o.owner ),
+      created( o.created ),
+      creator( o.creator ),
+      signing_key( o.signing_key ),
+      role( o.role ),
+      backed_sbd( legacy_asset::from_asset( o.backed_sbd ) )      
+   {}
+   
+   api_owner_object() {}
+   
+   owner_id_type     id;
+   account_name_type owner;
+   time_point_sec    created;
+   account_name_type creator;         
+   public_key_type   signing_key;
+   owner_object::owner_role_type role;
+   legacy_asset      backed_sbd;
+};
+
 struct api_comment_object
 {
    api_comment_object( const database_api::api_comment_object& c ):
@@ -934,6 +957,7 @@ DEFINE_API_ARGS( get_next_scheduled_hardfork,            vector< variant >,   sc
 DEFINE_API_ARGS( get_reward_fund,                        vector< variant >,   api_reward_fund_object )
 DEFINE_API_ARGS( get_key_references,                     vector< variant >,   vector< vector< account_name_type > > )
 DEFINE_API_ARGS( get_accounts,                           vector< variant >,   vector< extended_account > )
+DEFINE_API_ARGS( get_owners,                             vector< variant >,   vector< api_owner_object > )
 DEFINE_API_ARGS( get_account_references,                 vector< variant >,   vector< account_id_type > )
 DEFINE_API_ARGS( lookup_account_names,                   vector< variant >,   vector< optional< api_account_object > > )
 DEFINE_API_ARGS( lookup_accounts,                        vector< variant >,   set< string > )
@@ -1028,6 +1052,7 @@ public:
       (get_reward_fund)
       (get_key_references)
       (get_accounts)
+      (get_owners)
       (get_account_references)
       (lookup_account_names)
       (lookup_accounts)
@@ -1120,6 +1145,9 @@ FC_REFLECT( steem::plugins::condenser_api::api_limit_order_object,
 
 FC_REFLECT( steem::plugins::condenser_api::api_operation_object,
              (trx_id)(block)(trx_in_block)(op_in_trx)(virtual_op)(timestamp)(op) )
+             
+FC_REFLECT( steem::plugins::condenser_api::api_owner_object,
+             (id)(owner)(created)(creator)(signing_key)(role)(backed_sbd) )
 
 FC_REFLECT( steem::plugins::condenser_api::api_account_object,
              (id)(name)(owner)(active)(posting)(memo_key)(json_metadata)(proxy)(last_owner_update)(last_account_update)
