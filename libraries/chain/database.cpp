@@ -3117,10 +3117,14 @@ try {
             if( has_hardfork( STEEM_HARDFORK_0_14__230 ) )
             {
                const auto& gpo = get_dynamic_global_properties();
-               price min_price( asset( 9 * gpo.current_sbd_supply.amount, SBD_SYMBOL ), gpo.current_supply ); // This price limits SBD to 10% market cap
+               
+               if( gpo.current_sbd_supply.amount > 0 )
+               {
+                  price min_price( asset( 9 * gpo.current_sbd_supply.amount, SBD_SYMBOL ), gpo.current_supply ); // This price limits SBD to 10% market cap
 
-               if( min_price > fho.current_median_history )
-                  fho.current_median_history = min_price;
+                  if( min_price > fho.current_median_history )
+                     fho.current_median_history = min_price;
+               }
             }
          }
       });
