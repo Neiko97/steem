@@ -474,6 +474,16 @@ const account_object* database::find_account( const account_name_type& name )con
    return find< account_object, by_name >( name );
 }
 
+const owner_object& database::get_owner( const account_name_type& name )const
+{ try {
+   return get< owner_object, by_name >( name );
+} FC_CAPTURE_AND_RETHROW( (name) ) }
+
+const owner_object* database::find_owner( const account_name_type& name )const
+{
+   return find< owner_object, by_name >( name );
+}
+
 const comment_object& database::get_comment( const account_name_type& author, const shared_string& permlink )const
 { try {
    return get< comment_object, by_permlink >( boost::make_tuple( author, permlink ) );
@@ -3127,14 +3137,10 @@ try {
             if( has_hardfork( STEEM_HARDFORK_0_14__230 ) )
             {
                const auto& gpo = get_dynamic_global_properties();
-               
-               if( gpo.current_sbd_supply.amount > 0 )
-               {
-                  price min_price( asset( 9 * gpo.current_sbd_supply.amount, SBD_SYMBOL ), gpo.current_supply ); // This price limits SBD to 10% market cap
+               price min_price( asset( 9 * gpo.current_sbd_supply.amount, SBD_SYMBOL ), gpo.current_supply ); // This price limits SBD to 10% market cap
 
-                  if( min_price > fho.current_median_history )
-                     fho.current_median_history = min_price;
-               }
+               if( min_price > fho.current_median_history )
+                  fho.current_median_history = min_price;
             }
          }
       });

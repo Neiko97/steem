@@ -1042,6 +1042,11 @@ void transfer_evaluator::do_apply( const transfer_operation& o )
 
 void transfer_to_vesting_evaluator::do_apply( const transfer_to_vesting_operation& o )
 {
+   //if( _db.has_hardfork( EFTG_HARDFORK_0_1 ) ) {
+      const auto owner_name = o.to.size() ? o.to : o.from;
+      FC_ASSERT( _db.find_owner(owner_name), "The destination account must be an owner" );
+   //}
+
    const auto& from_account = _db.get_account(o.from);
    const auto& to_account = o.to.size() ? _db.get_account(o.to) : from_account;
 
@@ -1235,6 +1240,10 @@ void account_witness_proxy_evaluator::do_apply( const account_witness_proxy_oper
 
 void account_witness_vote_evaluator::do_apply( const account_witness_vote_operation& o )
 {
+   //if( _db.has_hardfork( EFTG_HARDFORK_0_1 ) ) {
+      FC_ASSERT( _db.find_owner(o.account), "Only Owners can vote for witnesses" );
+   //}
+
    const auto& voter = _db.get_account( o.account );
    FC_ASSERT( voter.proxy.size() == 0, "A proxy is currently set, please clear the proxy before voting for a witness." );
 
