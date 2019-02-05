@@ -604,6 +604,16 @@ FC_REFLECT( steem::plugins::database_api::api_account_recovery_request_object,
              (expires)
           )
 
+FC_REFLECT( steem::plugins::database_api::api_owner_object,
+             (id)
+             (owner)
+             (created)
+             (creator)
+             (signing_key)
+             (role)
+             (backed_sbd)
+          )
+
 FC_REFLECT( steem::plugins::database_api::api_savings_withdraw_object,
              (id)
              (from)

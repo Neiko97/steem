@@ -506,14 +506,12 @@ void owner_create_evaluator::do_apply( const owner_create_operation& o )
    FC_ASSERT( creator_itr != by_owner_name_idx.end() , "The creator must be an Owner" );   
    FC_ASSERT( owner_itr == by_owner_name_idx.end() , "This is already an Owner" );
    
-   const auto& props = _db.get_dynamic_global_properties();
-   
    _db.create< owner_object >( [&]( owner_object& owner )
    {
       owner.creator = o.creator;
       owner.owner = o.owner;
       owner.signing_key = o.signing_key;
-      owner.created = props.time;      
+      owner.created = _db.head_block_time();
    });   
 }
 

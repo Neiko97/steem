@@ -17,7 +17,7 @@
 #include <steem/chain/shared_db_merkle.hpp>
 #include <steem/chain/operation_notification.hpp>
 #include <steem/chain/witness_schedule.hpp>
-#include <steem/chain/owner_object.hpp> //todo: necessary?
+#include <steem/chain/owner_object.hpp>
 
 #include <steem/chain/util/asset.hpp>
 #include <steem/chain/util/reward.hpp>
@@ -2656,7 +2656,7 @@ void database::init_genesis( uint64_t init_supply )
          create< owner_object >( [&]( owner_object& owner )
          {
             owner.creator = "";
-            owner.owner = STEEM_INIT_MINER_NAME;
+            owner.owner = STEEM_INIT_MINER_NAME + ( i ? fc::to_string(i) : std::string() );
             owner.signing_key = init_public_key;
          } );
       }

@@ -54,8 +54,7 @@ namespace steem { namespace chain {
       owner_object,
       indexed_by<
          ordered_unique< tag< by_id >, member< owner_object, owner_id_type, &owner_object::id > >,
-         ordered_unique< tag< by_name >, member< owner_object, account_name_type, &owner_object::owner > >,
-         ordered_unique< tag< by_backed_sbd >, member< owner_object, asset, &owner_object::backed_sbd > >         
+         ordered_unique< tag< by_name >, member< owner_object, account_name_type, &owner_object::owner > >
       >,
       allocator< owner_object >
    > owner_index;   
