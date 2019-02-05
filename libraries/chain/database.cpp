@@ -2021,8 +2021,9 @@ void database::process_funds()
          p.virtual_supply           += asset( new_steem, STEEM_SYMBOL );
       });
 
-      const auto& producer_reward = create_vesting( get_account( cwit.owner ), asset( witness_reward, STEEM_SYMBOL ) );
-      push_virtual_operation( producer_reward_operation( cwit.owner, producer_reward ) );
+      //const auto& producer_reward = create_vesting( get_account( cwit.owner ), asset( witness_reward, STEEM_SYMBOL ) );
+      //push_virtual_operation( producer_reward_operation( cwit.owner, producer_reward ) );
+      push_virtual_operation( producer_reward_operation( cwit.owner, asset( witness_reward, STEEM_SYMBOL ) ) );
 
    }
    else

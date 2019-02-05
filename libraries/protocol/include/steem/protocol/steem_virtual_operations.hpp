@@ -172,7 +172,7 @@ namespace steem { namespace protocol {
       producer_reward_operation( const string& p, const asset& v ) : producer( p ), vesting_shares( v ) {}
 
       account_name_type producer;
-      asset             vesting_shares;
+      asset             vesting_shares; // TODO: change this name to "reward", because witnesses are paid in liquid EFTG after HF1
 
    };
 
