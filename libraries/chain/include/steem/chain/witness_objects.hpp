@@ -159,6 +159,24 @@ namespace steem { namespace chain {
          account_name_type witness;
          account_name_type account;
    };
+   
+   class witness_weight_vote_object : public object< witness_weight_vote_object_type, witness_weight_vote_object >
+   {
+      public:
+         template< typename Constructor, typename Allocator >
+         witness_weight_vote_object( Constructor&& c, allocator< Allocator > a )
+         {
+            c( *this );
+         }
+
+         witness_vote_object(){}
+
+         id_type           id;
+
+         account_name_type witness;
+         account_name_type account;
+         asset             shares;
+   };
 
    class witness_schedule_object : public object< witness_schedule_object_type, witness_schedule_object >
    {
@@ -246,6 +264,28 @@ namespace steem { namespace chain {
       >, // indexed_by
       allocator< witness_vote_object >
    > witness_vote_index;
+   
+   typedef multi_index_container<
+      witness_weight_vote_object,
+      indexed_by<
+         ordered_unique< tag< by_id >, member< witness_weight_vote_object, witness_weight_vote_id_type, &witness_weight_vote_object::id > >,
+         ordered_unique< tag< by_account_witness >,
+            composite_key< witness_weight_vote_object,
+               member< witness_weight_vote_object, account_name_type, &witness_weight_vote_object::account >,
+               member< witness_weight_vote_object, account_name_type, &witness_weight_vote_object::witness >
+            >,
+            composite_key_compare< std::less< account_name_type >, std::less< account_name_type > >
+         >,
+         ordered_unique< tag< by_witness_account >,
+            composite_key< witness_weight_vote_object,
+               member< witness_weight_vote_object, account_name_type, &witness_weight_vote_object::witness >,
+               member< witness_weight_vote_object, account_name_type, &witness_weight_vote_object::account >
+            >,
+            composite_key_compare< std::less< account_name_type >, std::less< account_name_type > >
+         >
+      >, // indexed_by
+      allocator< witness_weight_vote_object >
+   > witness_weight_vote_index;
 
    typedef multi_index_container<
       witness_schedule_object,
@@ -282,6 +322,9 @@ CHAINBASE_SET_INDEX_TYPE( steem::chain::witness_object, steem::chain::witness_in
 
 FC_REFLECT( steem::chain::witness_vote_object, (id)(witness)(account) )
 CHAINBASE_SET_INDEX_TYPE( steem::chain::witness_vote_object, steem::chain::witness_vote_index )
+
+FC_REFLECT( steem::chain::witness_weight_vote_object, (id)(witness)(account)(shares) )
+CHAINBASE_SET_INDEX_TYPE( steem::chain::witness_weight_vote_object, steem::chain::witness_weight_vote_index )
 
 FC_REFLECT( steem::chain::witness_schedule_object,
              (id)(current_virtual_time)(next_shuffle_block_num)(current_shuffled_witnesses)(num_scheduled_witnesses)

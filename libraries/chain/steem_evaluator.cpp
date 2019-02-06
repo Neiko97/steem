@@ -1240,10 +1240,9 @@ void account_witness_proxy_evaluator::do_apply( const account_witness_proxy_oper
 
 void account_witness_vote_evaluator::do_apply( const account_witness_vote_operation& o )
 {
-   //if( _db.has_hardfork( EFTG_HARDFORK_0_1 ) ) {
-      FC_ASSERT( _db.find_owner(o.account), "Only Owners can vote for witnesses" );
-   //}
-
+   // FC_ASSERT( !_db.has_hardfork( EFTG_HARDFORK_0_1 ) , "This operation is not available after EFTG Hardfork 1, use account_wintess_weight_vote instead" );
+   FC_ASSERT( false , "This operation is not available after EFTG Hardfork 1, use account_wintess_weight_vote instead" ); //remove after implementation of the hardfork
+   
    const auto& voter = _db.get_account( o.account );
    FC_ASSERT( voter.proxy.size() == 0, "A proxy is currently set, please clear the proxy before voting for a witness." );
 
@@ -1306,6 +1305,62 @@ void account_witness_vote_evaluator::do_apply( const account_witness_vote_operat
          a.witnesses_voted_for--;
       });
       _db.remove( *itr );
+   }
+}
+
+
+void account_witness_weight_vote_evaluator::do_apply( const account_witness_weight_vote_operation& o )
+{
+   //FC_ASSERT( _db.has_hardfork( EFTG_HARDFORK_0_1 ) , "This operation is available after EFTG HF 1" )
+   FC_ASSERT( _db.find_owner(o.account), "Only Owners can vote for witnesses" );
+
+   const auto& voter = _db.get_account( o.account );
+   
+   FC_ASSERT( voter.can_vote, "Account has declined its voting rights." );
+
+   const auto& witness = _db.get_witness( o.witness );
+
+   const auto& by_account_witness_idx = _db.get_index< witness_weight_vote_index >().indices().get< by_account_witness >();
+   auto itr = by_account_witness_idx.find( boost::make_tuple( voter.name, witness.owner ) );
+
+   if( itr == by_account_witness_idx.end() ) {
+      FC_ASSERT( a.available_witness_vote_shares >= o.shares, "Insufficient shares to vote for a witness.",
+         ( "a.available_witness_vote_shares", a.available_witness_vote_shares )
+         ( "o.shares", o.shares ) );
+
+      _db.create<witness_weight_vote_object>( [&]( witness_weight_vote_object& v ) {
+          v.witness = witness.owner;
+          v.account = voter.name;
+          v.shares = o.shares;
+      });
+
+      _db.adjust_witness_vote( witness, o.shares );
+
+      _db.modify( voter, [&]( account_object& a ) {
+         a.available_witness_vote_shares -= o.shares;
+      });
+   } else {
+      auto delta = o.shares - itr->shares;
+      FC_ASSERT( a.available_witness_vote_shares >= delta, "Insufficient shares to vote for a witness.",
+         ( "a.witness_vote_shares", a.available_witness_vote_shares )
+         ( "delta", delta ) );
+
+      _db.adjust_witness_vote( witness, delta );
+
+      _db.modify( voter, [&]( account_object& a ) {
+         a.available_witness_vote_shares -= delta;
+      });
+
+      if( o.shares > 0 ) {
+         _db.modify( *itr , [&]( witness_weight_vote_object& v ) {
+             v.witness = witness.owner;
+             v.account = voter.name;
+             v.shares = o.shares;
+         });
+      }
+      else {
+         _db.remove( *itr );
+      }
    }
 }
 

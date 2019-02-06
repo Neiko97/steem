@@ -543,7 +543,7 @@ namespace steem { namespace protocol {
    };
    
    
-   /**
+   /** Deprecated after EFTG HF1
     * All accounts with a VFS can vote for or against any witness.
     *
     * If a proxy is specified then all existing votes are removed.
@@ -553,6 +553,21 @@ namespace steem { namespace protocol {
       account_name_type account;
       account_name_type witness;
       bool              approve = true;
+
+      void validate() const;
+      void get_required_active_authorities( flat_set<account_name_type>& a )const{ a.insert(account); }
+   };
+
+   /**
+    * Available after EFTG HF1
+    * All accounts with a VFS can vote for or against any witness.
+    * Instead of voting with all vesting shares, the user can define the amount (weight) of approval
+    */
+   struct account_witness_weight_vote_operation : public base_operation
+   {
+      account_name_type account;
+      account_name_type witness;
+      asset             shares;
 
       void validate() const;
       void get_required_active_authorities( flat_set<account_name_type>& a )const{ a.insert(account); }
@@ -1143,6 +1158,7 @@ FC_REFLECT( steem::protocol::set_withdraw_vesting_route_operation, (from_account
 FC_REFLECT( steem::protocol::witness_update_operation, (owner)(url)(block_signing_key)(props)(fee) )
 FC_REFLECT( steem::protocol::witness_set_properties_operation, (owner)(props)(extensions) )
 FC_REFLECT( steem::protocol::account_witness_vote_operation, (account)(witness)(approve) )
+FC_REFLECT( steem::protocol::account_witness_weight_vote_operation, (account)(witness)(shares) )
 FC_REFLECT( steem::protocol::account_witness_proxy_operation, (account)(proxy) )
 FC_REFLECT( steem::protocol::comment_operation, (parent_author)(parent_permlink)(author)(permlink)(title)(body)(json_metadata) )
 FC_REFLECT( steem::protocol::vote_operation, (voter)(author)(permlink)(weight) )

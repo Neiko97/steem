@@ -2419,6 +2419,7 @@ void database::initialize_evaluators()
    _my->_evaluator_registry.register_evaluator< owner_create_evaluator                   >();
    _my->_evaluator_registry.register_evaluator< witness_update_evaluator                 >();
    _my->_evaluator_registry.register_evaluator< account_witness_vote_evaluator           >();
+   _my->_evaluator_registry.register_evaluator< account_witness_weight_vote_evaluator    >();
    _my->_evaluator_registry.register_evaluator< account_witness_proxy_evaluator          >();
    _my->_evaluator_registry.register_evaluator< custom_evaluator                         >();
    _my->_evaluator_registry.register_evaluator< custom_binary_evaluator                  >();
@@ -2495,6 +2496,7 @@ void database::initialize_indexes()
    add_core_index< comment_content_index                   >(*this);
    add_core_index< comment_vote_index                      >(*this);
    add_core_index< witness_vote_index                      >(*this);
+   add_core_index< witness_weight_vote_index               >(*this);
    add_core_index< limit_order_index                       >(*this);
    add_core_index< feed_history_index                      >(*this);
    add_core_index< convert_request_index                   >(*this);

@@ -305,6 +305,14 @@ namespace steem { namespace protocol {
       validate_account_name( witness );
    }
 
+   void account_witness_weight_vote_operation::validate() const
+   {
+      validate_account_name( account );
+      validate_account_name( witness );
+      FC_ASSERT( is_asset_type( shares, VESTS_SYMBOL), "Amount must be VESTS"  );
+      FC_ASSERT( shares >= asset( 0, VESTS_SYMBOL ), "VESTS must be greater or equal to zero" );
+   }
+
    void account_witness_proxy_operation::validate() const
    {
       validate_account_name( account );
