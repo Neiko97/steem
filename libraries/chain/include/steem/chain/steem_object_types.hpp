@@ -228,6 +228,7 @@ FC_REFLECT_ENUM( steem::chain::object_type,
                  (comment_content_object_type)
                  (comment_vote_object_type)
                  (witness_vote_object_type)
+                 (witness_weight_vote_object_type)
                  (limit_order_object_type)
                  (feed_history_object_type)
                  (convert_request_object_type)

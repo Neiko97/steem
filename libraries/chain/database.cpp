@@ -1231,9 +1231,38 @@ asset database::create_vesting( const account_object& to_account, asset liquid, 
          }
       } );
       // Update witness voting numbers.
-      if( !to_reward_balance )
-         adjust_proxied_witness_votes( to_account, new_vesting.amount );
+      if( !to_reward_balance ) {
+         //if( has_hardfork( EFTG_HARDFORK_0_1 ) ) {
 
+            /**
+             * Option 1:
+             * the user has to define manually the distribution of the
+             * new vesting between witnesses
+             */
+            modify( to_account, [&]( account_object& a )
+            {
+               a.available_witness_vote_shares += new_vesting;
+            } );
+
+            /**
+             * Option 2:
+             * the new vesting is allocated between witnesses automatically.
+             * However, suppose this bad situation:
+             *   a.vesting_shares = 4000 VESTS
+             *   total votes for witnesses       =  200 VESTS ( 5% of steem power)
+             *   a.available_witness_vote_shares = 3800 VESTS (95% of steem power)
+             *
+             *   and then a power up of 6000 VESTS.
+             *   Result:
+             *   a.vesting_shares = 10000 VESTS
+             *   total votes for witnesses       = 6200 VESTS (62% of steem power) changes in the percentage of participation
+             *   a.available_witness_vote_shares = 3800 VESTS (38% of steem power)
+             */
+            //adjust_witness_votes( to_account, new_vesting.amount );
+         //} else {
+         //   adjust_proxied_witness_votes( to_account, new_vesting.amount );
+         //}
+      }
       return new_vesting;
    }
    FC_CAPTURE_AND_RETHROW( (to_account.name)(liquid) )
@@ -1267,6 +1296,9 @@ void database::adjust_proxied_witness_votes( const account_object& a,
                                    const std::array< share_type, STEEM_MAX_PROXY_RECURSION_DEPTH+1 >& delta,
                                    int depth )
 {
+   //if( has_hardfork( EFTG_HARDFORK_0_1 ) ) return;
+   return; //proxies are not supported on EFTG HF1
+
    if( a.proxy != STEEM_PROXY_TO_SELF_ACCOUNT )
    {
       /// nested proxies are not supported, vote will not propagate
@@ -1296,6 +1328,9 @@ void database::adjust_proxied_witness_votes( const account_object& a,
 
 void database::adjust_proxied_witness_votes( const account_object& a, share_type delta, int depth )
 {
+   //if( has_hardfork( EFTG_HARDFORK_0_1 ) ) return;
+   return; //proxies are not supported on EFTG HF1
+
    if( a.proxy != STEEM_PROXY_TO_SELF_ACCOUNT )
    {
       /// nested proxies are not supported, vote will not propagate
@@ -1319,13 +1354,53 @@ void database::adjust_proxied_witness_votes( const account_object& a, share_type
 
 void database::adjust_witness_votes( const account_object& a, share_type delta )
 {
-   const auto& vidx = get_index< witness_vote_index >().indices().get< by_account_witness >();
-   auto itr = vidx.lower_bound( boost::make_tuple( a.name, account_name_type() ) );
-   while( itr != vidx.end() && itr->account == a.name )
+   //if( has_hardfork( EFTG_HARDFORK_0_1 ) )
+   //{
+      const auto& vidx = get_index< witness_weight_vote_index >().indices().get< by_account_witness >();
+      auto itr = vidx.lower_bound( boost::make_tuple( a.name, account_name_type() ) );
+      share_type total_shares(0);
+      while( itr != vidx.end() && itr->account == a.name )
+      {
+         total_shares += itr->shares.amount;
+         ++itr;
+      }
+
+      itr = vidx.lower_bound( boost::make_tuple( a.name, account_name_type() ) );
+      share_type rest = delta;
+      while( itr != vidx.end() && itr->account == a.name )
+      {
+         share_type wit_delta = delta * itr->shares.amount / total_shares;
+         rest -= wit_delta;
+         adjust_witness_vote( get< witness_object, by_name >(itr->witness), wit_delta );
+         ++itr;
+      }
+
+      itr = vidx.lower_bound( boost::make_tuple( a.name, account_name_type() ) );
+      while( rest != 0 && itr != vidx.end() && itr->account == a.name)
+      {
+         if( rest > 0 ){
+            adjust_witness_vote( get< witness_object, by_name >(itr->witness), 1 );
+            rest--;
+         } else {
+            if( itr->shares.amount > 0 )
+            {
+               adjust_witness_vote( get< witness_object, by_name >(itr->witness), -1 );
+               rest++;
+            }
+         }
+         ++itr;
+      }
+   /*}
+   else
    {
-      adjust_witness_vote( get< witness_object, by_name >(itr->witness), delta );
-      ++itr;
-   }
+      const auto& vidx = get_index< witness_vote_index >().indices().get< by_account_witness >();
+      auto itr = vidx.lower_bound( boost::make_tuple( a.name, account_name_type() ) );
+      while( itr != vidx.end() && itr->account == a.name )
+      {
+         adjust_witness_vote( get< witness_object, by_name >(itr->witness), delta );
+         ++itr;
+      }
+   }*/
 }
 
 void database::adjust_witness_vote( const witness_object& witness, share_type delta )
@@ -1544,7 +1619,17 @@ void database::process_vesting_withdrawals()
                   a.vesting_shares.amount += to_deposit;
                });
 
-               adjust_proxied_witness_votes( to_account, to_deposit );
+               //if( has_hardfork( EFTG_HARDFORK_0_1 ) )
+               //{
+                  modify( to_account, [&]( account_object& a )
+                  {
+                     a.available_witness_vote_shares.amount += to_deposit;
+                  });
+                  //adjust_witness_votes( to_account, to_deposit );
+               //}
+               //else {
+               //   adjust_proxied_witness_votes( to_account, to_deposit );
+               //}
 
                push_virtual_operation( fill_vesting_withdraw_operation( from_account.name, to_account.name, asset( to_deposit, VESTS_SYMBOL ), asset( to_deposit, VESTS_SYMBOL ) ) );
             }
@@ -1610,8 +1695,32 @@ void database::process_vesting_withdrawals()
          o.total_vesting_shares.amount -= to_convert;
       });
 
-      if( to_withdraw > 0 )
-         adjust_proxied_witness_votes( from_account, -to_withdraw );
+      //if( has_hardfork( EFTG_HARDFORK_0_1 ) )
+      //{
+         share_type to_remove_from_witnesses = to_withdraw - from_account.available_witness_vote_shares.amount;
+
+         if( to_remove_from_witnesses > 0 )
+         {
+            modify( from_account, [&]( account_object& a )
+            {
+               a.available_witness_vote_shares.amount = 0;
+            } );
+
+            adjust_witness_votes( from_account, -to_remove_from_witnesses );
+         }
+         else {
+            modify( from_account, [&]( account_object& a )
+            {
+               a.available_witness_vote_shares.amount -= to_withdraw;
+            } );
+         }
+      //}
+      //else {
+
+      //   if( to_withdraw > 0 )
+      //      adjust_proxied_witness_votes( from_account, -to_withdraw );
+      //
+      //}
 
       push_virtual_operation( fill_vesting_withdraw_operation( from_account.name, from_account.name, asset( to_convert, VESTS_SYMBOL ), converted_steem ) );
    }
@@ -2359,14 +2468,29 @@ void database::process_decline_voting_rights()
    {
       const auto& account = get< account_object, by_name >( itr->account );
 
-      /// remove all current votes
-      std::array<share_type, STEEM_MAX_PROXY_RECURSION_DEPTH+1> delta;
-      delta[0] = -account.vesting_shares.amount;
-      for( int i = 0; i < STEEM_MAX_PROXY_RECURSION_DEPTH; ++i )
-         delta[i+1] = -account.proxied_vsf_votes[i];
-      adjust_proxied_witness_votes( account, delta );
+      //if( has_hardfork( EFTG_HARDFORK_0_1 ) )
+      //{
+         share_type to_remove_from_witnesses = account.vesting_shares.amount - account.available_witness_vote_shares.amount;
 
-      clear_witness_votes( account );
+         modify( account, [&]( account_object& a )
+         {
+            a.available_witness_vote_shares.amount = 0;
+         } );
+
+         if( to_remove_from_witnesses > 0 )
+            adjust_witness_votes( account, -to_remove_from_witnesses );
+      /*}
+      else
+      {
+         /// remove all current votes
+         std::array<share_type, STEEM_MAX_PROXY_RECURSION_DEPTH+1> delta;
+         delta[0] = -account.vesting_shares.amount;
+         for( int i = 0; i < STEEM_MAX_PROXY_RECURSION_DEPTH; ++i )
+            delta[i+1] = -account.proxied_vsf_votes[i];
+         adjust_proxied_witness_votes( account, delta );
+
+         clear_witness_votes( account );
+      }*/
 
       modify( account, [&]( account_object& a )
       {

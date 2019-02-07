@@ -1324,9 +1324,10 @@ void account_witness_weight_vote_evaluator::do_apply( const account_witness_weig
    auto itr = by_account_witness_idx.find( boost::make_tuple( voter.name, witness.owner ) );
 
    if( itr == by_account_witness_idx.end() ) {
-      FC_ASSERT( a.available_witness_vote_shares >= o.shares, "Insufficient shares to vote for a witness.",
-         ( "a.available_witness_vote_shares", a.available_witness_vote_shares )
+      FC_ASSERT( voter.available_witness_vote_shares >= o.shares, "Insufficient shares to vote for a witness.",
+         ( "voter.available_witness_vote_shares", voter.available_witness_vote_shares )
          ( "o.shares", o.shares ) );
+      FC_ASSERT( o.shares.amount > 0, "Vote doesn't exists, shares must me greater than zero." );
 
       _db.create<witness_weight_vote_object>( [&]( witness_weight_vote_object& v ) {
           v.witness = witness.owner;
@@ -1334,24 +1335,24 @@ void account_witness_weight_vote_evaluator::do_apply( const account_witness_weig
           v.shares = o.shares;
       });
 
-      _db.adjust_witness_vote( witness, o.shares );
+      _db.adjust_witness_vote( witness, o.shares.amount );
 
       _db.modify( voter, [&]( account_object& a ) {
          a.available_witness_vote_shares -= o.shares;
       });
    } else {
       auto delta = o.shares - itr->shares;
-      FC_ASSERT( a.available_witness_vote_shares >= delta, "Insufficient shares to vote for a witness.",
-         ( "a.witness_vote_shares", a.available_witness_vote_shares )
+      FC_ASSERT( voter.available_witness_vote_shares >= delta, "Insufficient shares to vote for a witness.",
+         ( "voter.available_witness_vote_shares", voter.available_witness_vote_shares )
          ( "delta", delta ) );
 
-      _db.adjust_witness_vote( witness, delta );
+      _db.adjust_witness_vote( witness, delta.amount );
 
       _db.modify( voter, [&]( account_object& a ) {
          a.available_witness_vote_shares -= delta;
       });
 
-      if( o.shares > 0 ) {
+      if( o.shares.amount > 0 ) {
          _db.modify( *itr , [&]( witness_weight_vote_object& v ) {
              v.witness = witness.owner;
              v.account = voter.name;

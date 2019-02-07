@@ -169,7 +169,7 @@ namespace steem { namespace chain {
             c( *this );
          }
 
-         witness_vote_object(){}
+         witness_weight_vote_object(){}
 
          id_type           id;
 
