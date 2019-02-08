@@ -1749,21 +1749,21 @@ condenser_api::legacy_signed_transaction wallet_api::update_witness(
 condenser_api::legacy_signed_transaction wallet_api::vote_for_witness(
    string voting_account,
    string witness_to_vote_for,
-   bool approve,
+   condenser_api::legacy_asset shares,
    bool broadcast )
 { try {
    FC_ASSERT( !is_locked() );
-    account_witness_vote_operation op;
+    account_witness_weight_vote_operation op;
     op.account = voting_account;
     op.witness = witness_to_vote_for;
-    op.approve = approve;
+    op.shares = shares.to_asset();
 
     signed_transaction tx;
     tx.operations.push_back( op );
     tx.validate();
 
    return my->sign_transaction( tx, broadcast );
-} FC_CAPTURE_AND_RETHROW( (voting_account)(witness_to_vote_for)(approve)(broadcast) ) }
+} FC_CAPTURE_AND_RETHROW( (voting_account)(witness_to_vote_for)(shares)(broadcast) ) }
 
 void wallet_api::check_memo(
    const string& memo,

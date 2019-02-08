@@ -646,7 +646,7 @@ class wallet_api
       condenser_api::legacy_signed_transaction vote_for_witness(
          string account_to_vote_with,
          string witness_to_vote_for,
-         bool approve = true,
+         condenser_api::legacy_asset shares,
          bool broadcast = false);
 
       /**
