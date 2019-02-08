@@ -1003,6 +1003,29 @@ namespace steem { namespace plugins { namespace condenser_api {
       extensions_type   extensions;
    };
 
+   struct legacy_account_witness_weight_vote_operation
+   {
+      legacy_account_witness_weight_vote_operation() {}
+      legacy_account_witness_weight_vote_operation( const account_witness_weight_vote_operation& op ) :
+         account( op.account ),
+         witness( op.witness ),
+         shares( legacy_asset::from_asset( op.shares ) )
+      {}
+
+      operator account_witness_weight_vote_operation()const
+      {
+         account_witness_weight_vote_operation op;
+         op.account = account;
+         op.witness = witness;
+         op.shares = shares;
+         return op;
+      }
+
+      account_name_type account;
+      account_name_type witness;
+      legacy_asset      shares;
+   };
+
    typedef fc::static_variant<
             legacy_vote_operation,
             legacy_comment_operation,
@@ -1018,6 +1041,7 @@ namespace steem { namespace plugins { namespace condenser_api {
             legacy_witness_update_operation,
             legacy_owner_create_operation,
             legacy_account_witness_vote_operation,
+            legacy_account_witness_weight_vote_operation,
             legacy_account_witness_proxy_operation,
             legacy_pow_operation,
             legacy_custom_operation,
@@ -1293,6 +1317,11 @@ namespace steem { namespace plugins { namespace condenser_api {
          return true;
       }
 
+      bool operator()( const account_witness_weight_vote_operation& op )const
+      {
+         l_op = legacy_account_witness_weight_vote_operation ( op );
+         return true;
+      }
 
       // Should only be SMT ops
       template< typename T >
@@ -1465,6 +1494,11 @@ struct convert_from_legacy_operation_visitor
       return operation( claim_account_operation( op ) );
    }
 
+   operation operator()( const legacy_account_witness_weight_vote_operation & op )const
+   {
+      return operation( account_witness_weight_vote_operation( op ) );
+   }
+
    template< typename T >
    operation operator()( const T& t )const
    {
@@ -1588,5 +1622,6 @@ FC_REFLECT( steem::plugins::condenser_api::legacy_return_vesting_delegation_oper
 FC_REFLECT( steem::plugins::condenser_api::legacy_comment_benefactor_reward_operation, (benefactor)(author)(permlink)(reward) )
 FC_REFLECT( steem::plugins::condenser_api::legacy_producer_reward_operation, (producer)(vesting_shares) )
 FC_REFLECT( steem::plugins::condenser_api::legacy_claim_account_operation, (creator)(fee)(extensions) )
+FC_REFLECT( steem::plugins::condenser_api::legacy_account_witness_weight_vote_operation , (account)(witness)(shares) )
 
 FC_REFLECT_TYPENAME( steem::plugins::condenser_api::legacy_operation )
