@@ -2132,6 +2132,7 @@ void database::process_funds()
 
       //const auto& producer_reward = create_vesting( get_account( cwit.owner ), asset( witness_reward, STEEM_SYMBOL ) );
       //push_virtual_operation( producer_reward_operation( cwit.owner, producer_reward ) );
+      adjust_balance( get_account( cwit.owner ) , asset( witness_reward, STEEM_SYMBOL ) );
       push_virtual_operation( producer_reward_operation( cwit.owner, asset( witness_reward, STEEM_SYMBOL ) ) );
 
    }
