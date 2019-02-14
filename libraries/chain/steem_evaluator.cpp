@@ -494,7 +494,7 @@ void account_update_evaluator::do_apply( const account_update_operation& o )
 
 void owner_create_evaluator::do_apply( const owner_create_operation& o )
 {
-   //FC_ASSERT( _db.has_hardfork( EFTG_HARDFORK_0_1 ) , "This operation is available after EFTG HF 1" )
+   FC_ASSERT( _db.has_hardfork( EFTG_HARDFORK_0_1 ) , "This operation is available after EFTG HF 1" );
       
    _db.get_account( o.creator ); // verify creator exists
    _db.get_account( o.owner ); // verify owner exists   
@@ -1042,10 +1042,10 @@ void transfer_evaluator::do_apply( const transfer_operation& o )
 
 void transfer_to_vesting_evaluator::do_apply( const transfer_to_vesting_operation& o )
 {
-   //if( _db.has_hardfork( EFTG_HARDFORK_0_1 ) ) {
+   if( _db.has_hardfork( EFTG_HARDFORK_0_1 ) ) {
       const auto owner_name = o.to.size() ? o.to : o.from;
       FC_ASSERT( _db.find_owner(owner_name), "The destination account must be an owner" );
-   //}
+   }
 
    const auto& from_account = _db.get_account(o.from);
    const auto& to_account = o.to.size() ? _db.get_account(o.to) : from_account;
@@ -1240,9 +1240,8 @@ void account_witness_proxy_evaluator::do_apply( const account_witness_proxy_oper
 
 void account_witness_vote_evaluator::do_apply( const account_witness_vote_operation& o )
 {
-   // FC_ASSERT( !_db.has_hardfork( EFTG_HARDFORK_0_1 ) , "This operation is not available after EFTG Hardfork 1, use account_wintess_weight_vote instead" );
-   FC_ASSERT( false , "This operation is not available after EFTG Hardfork 1, use account_wintess_weight_vote instead" ); //remove after implementation of the hardfork
-   
+   FC_ASSERT( !_db.has_hardfork( EFTG_HARDFORK_0_1 ) , "This operation is not available after EFTG Hardfork 1, use account_wintess_weight_vote instead" );
+
    const auto& voter = _db.get_account( o.account );
    FC_ASSERT( voter.proxy.size() == 0, "A proxy is currently set, please clear the proxy before voting for a witness." );
 
@@ -1311,7 +1310,7 @@ void account_witness_vote_evaluator::do_apply( const account_witness_vote_operat
 
 void account_witness_weight_vote_evaluator::do_apply( const account_witness_weight_vote_operation& o )
 {
-   //FC_ASSERT( _db.has_hardfork( EFTG_HARDFORK_0_1 ) , "This operation is available after EFTG HF 1" )
+   FC_ASSERT( _db.has_hardfork( EFTG_HARDFORK_0_1 ) , "This operation is available after EFTG HF 1" );
    FC_ASSERT( _db.find_owner(o.account), "Only Owners can vote for witnesses" );
 
    const auto& voter = _db.get_account( o.account );
@@ -1335,10 +1334,17 @@ void account_witness_weight_vote_evaluator::do_apply( const account_witness_weig
           v.shares = o.shares;
       });
 
+      // support to the old table witness_vote_object
+      _db.create<witness_vote_object>( [&]( witness_vote_object& v ) {
+          v.witness = witness.owner;
+          v.account = voter.name;
+      });
+
       _db.adjust_witness_vote( witness, o.shares.amount );
 
       _db.modify( voter, [&]( account_object& a ) {
          a.available_witness_vote_shares -= o.shares;
+         a.witnesses_voted_for++;
       });
    } else {
       auto delta = o.shares - itr->shares;
@@ -1360,7 +1366,18 @@ void account_witness_weight_vote_evaluator::do_apply( const account_witness_weig
          });
       }
       else {
+         _db.modify( voter, [&]( account_object& a ) {
+            a.witnesses_voted_for--;
+         });
+
          _db.remove( *itr );
+
+         // support to the old table witness_vote_object
+         const auto& awidx = _db.get_index< witness_vote_index >().indices().get< by_account_witness >();
+         auto itr_oldtable = awidx.find( boost::make_tuple( voter.name, witness.owner ) );
+         if( itr_oldtable != awidx.end() ){
+            _db.remove( *itr_oldtable );
+         }
       }
    }
 }

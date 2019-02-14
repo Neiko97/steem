@@ -1232,7 +1232,7 @@ asset database::create_vesting( const account_object& to_account, asset liquid, 
       } );
       // Update witness voting numbers.
       if( !to_reward_balance ) {
-         //if( has_hardfork( EFTG_HARDFORK_0_1 ) ) {
+         if( has_hardfork( EFTG_HARDFORK_0_1 ) ) {
 
             /**
              * Option 1:
@@ -1259,9 +1259,9 @@ asset database::create_vesting( const account_object& to_account, asset liquid, 
              *   a.available_witness_vote_shares = 3800 VESTS (38% of steem power)
              */
             //adjust_witness_votes( to_account, new_vesting.amount );
-         //} else {
-         //   adjust_proxied_witness_votes( to_account, new_vesting.amount );
-         //}
+         } else {
+            adjust_proxied_witness_votes( to_account, new_vesting.amount );
+         }
       }
       return new_vesting;
    }
@@ -1296,8 +1296,7 @@ void database::adjust_proxied_witness_votes( const account_object& a,
                                    const std::array< share_type, STEEM_MAX_PROXY_RECURSION_DEPTH+1 >& delta,
                                    int depth )
 {
-   //if( has_hardfork( EFTG_HARDFORK_0_1 ) ) return;
-   return; //proxies are not supported on EFTG HF1
+   if( has_hardfork( EFTG_HARDFORK_0_1 ) ) return; //proxies are not supported on EFTG HF1
 
    if( a.proxy != STEEM_PROXY_TO_SELF_ACCOUNT )
    {
@@ -1328,8 +1327,7 @@ void database::adjust_proxied_witness_votes( const account_object& a,
 
 void database::adjust_proxied_witness_votes( const account_object& a, share_type delta, int depth )
 {
-   //if( has_hardfork( EFTG_HARDFORK_0_1 ) ) return;
-   return; //proxies are not supported on EFTG HF1
+   if( has_hardfork( EFTG_HARDFORK_0_1 ) ) return; //proxies are not supported on EFTG HF1
 
    if( a.proxy != STEEM_PROXY_TO_SELF_ACCOUNT )
    {
@@ -1352,45 +1350,59 @@ void database::adjust_proxied_witness_votes( const account_object& a, share_type
    }
 }
 
+void database::adjust_witness_weight_votes( const account_object& a, share_type delta )
+{
+   const auto& vidx = get_index< witness_weight_vote_index >().indices().get< by_account_witness >();
+   auto itr = vidx.lower_bound( boost::make_tuple( a.name, account_name_type() ) );
+   share_type total_shares(0);
+   share_type total_witnesses(0);
+   while( itr != vidx.end() && itr->account == a.name )
+   {
+      total_shares += itr->shares.amount;
+      total_witnesses++;
+      ++itr;
+   }
+
+   if( delta < 0 )
+      FC_ASSERT( total_shares + delta >= 0, "Insufficient votes to take from witnesses" );
+
+   itr = vidx.lower_bound( boost::make_tuple( a.name, account_name_type() ) );
+   share_type rest = delta;
+   while( itr != vidx.end() && itr->account == a.name )
+   {
+      share_type wit_delta(0);
+      if( total_shares == 0 )
+         wit_delta = delta / total_witnesses;
+      else
+         wit_delta = delta * itr->shares.amount / total_shares;
+      rest -= wit_delta;
+      adjust_witness_vote( get< witness_object, by_name >(itr->witness), wit_delta );
+      ++itr;
+   }
+
+   itr = vidx.lower_bound( boost::make_tuple( a.name, account_name_type() ) );
+   while( rest != 0 && itr != vidx.end() && itr->account == a.name)
+   {
+      if( rest > 0 ){
+         adjust_witness_vote( get< witness_object, by_name >(itr->witness), 1 );
+         rest--;
+      } else {
+         if( itr->shares.amount > 0 )
+         {
+            adjust_witness_vote( get< witness_object, by_name >(itr->witness), -1 );
+            rest++;
+         }
+      }
+      ++itr;
+   }
+}
+
 void database::adjust_witness_votes( const account_object& a, share_type delta )
 {
-   //if( has_hardfork( EFTG_HARDFORK_0_1 ) )
-   //{
-      const auto& vidx = get_index< witness_weight_vote_index >().indices().get< by_account_witness >();
-      auto itr = vidx.lower_bound( boost::make_tuple( a.name, account_name_type() ) );
-      share_type total_shares(0);
-      while( itr != vidx.end() && itr->account == a.name )
-      {
-         total_shares += itr->shares.amount;
-         ++itr;
-      }
-
-      itr = vidx.lower_bound( boost::make_tuple( a.name, account_name_type() ) );
-      share_type rest = delta;
-      while( itr != vidx.end() && itr->account == a.name )
-      {
-         share_type wit_delta = delta * itr->shares.amount / total_shares;
-         rest -= wit_delta;
-         adjust_witness_vote( get< witness_object, by_name >(itr->witness), wit_delta );
-         ++itr;
-      }
-
-      itr = vidx.lower_bound( boost::make_tuple( a.name, account_name_type() ) );
-      while( rest != 0 && itr != vidx.end() && itr->account == a.name)
-      {
-         if( rest > 0 ){
-            adjust_witness_vote( get< witness_object, by_name >(itr->witness), 1 );
-            rest--;
-         } else {
-            if( itr->shares.amount > 0 )
-            {
-               adjust_witness_vote( get< witness_object, by_name >(itr->witness), -1 );
-               rest++;
-            }
-         }
-         ++itr;
-      }
-   /*}
+   if( has_hardfork( EFTG_HARDFORK_0_1 ) )
+   {
+      adjust_witness_weight_votes( a, delta );
+   }
    else
    {
       const auto& vidx = get_index< witness_vote_index >().indices().get< by_account_witness >();
@@ -1400,7 +1412,7 @@ void database::adjust_witness_votes( const account_object& a, share_type delta )
          adjust_witness_vote( get< witness_object, by_name >(itr->witness), delta );
          ++itr;
       }
-   }*/
+   }
 }
 
 void database::adjust_witness_vote( const witness_object& witness, share_type delta )
@@ -1619,17 +1631,17 @@ void database::process_vesting_withdrawals()
                   a.vesting_shares.amount += to_deposit;
                });
 
-               //if( has_hardfork( EFTG_HARDFORK_0_1 ) )
-               //{
+               if( has_hardfork( EFTG_HARDFORK_0_1 ) )
+               {
                   modify( to_account, [&]( account_object& a )
                   {
                      a.available_witness_vote_shares.amount += to_deposit;
                   });
                   //adjust_witness_votes( to_account, to_deposit );
-               //}
-               //else {
-               //   adjust_proxied_witness_votes( to_account, to_deposit );
-               //}
+               }
+               else {
+                  adjust_proxied_witness_votes( to_account, to_deposit );
+               }
 
                push_virtual_operation( fill_vesting_withdraw_operation( from_account.name, to_account.name, asset( to_deposit, VESTS_SYMBOL ), asset( to_deposit, VESTS_SYMBOL ) ) );
             }
@@ -1695,8 +1707,8 @@ void database::process_vesting_withdrawals()
          o.total_vesting_shares.amount -= to_convert;
       });
 
-      //if( has_hardfork( EFTG_HARDFORK_0_1 ) )
-      //{
+      if( has_hardfork( EFTG_HARDFORK_0_1 ) )
+      {
          share_type to_remove_from_witnesses = to_withdraw - from_account.available_witness_vote_shares.amount;
 
          if( to_remove_from_witnesses > 0 )
@@ -1714,13 +1726,12 @@ void database::process_vesting_withdrawals()
                a.available_witness_vote_shares.amount -= to_withdraw;
             } );
          }
-      //}
-      //else {
-
-      //   if( to_withdraw > 0 )
-      //      adjust_proxied_witness_votes( from_account, -to_withdraw );
-      //
-      //}
+      }
+      else
+      {
+         if( to_withdraw > 0 )
+            adjust_proxied_witness_votes( from_account, -to_withdraw );
+      }
 
       push_virtual_operation( fill_vesting_withdraw_operation( from_account.name, from_account.name, asset( to_convert, VESTS_SYMBOL ), converted_steem ) );
    }
@@ -2130,10 +2141,14 @@ void database::process_funds()
          p.virtual_supply           += asset( new_steem, STEEM_SYMBOL );
       });
 
-      //const auto& producer_reward = create_vesting( get_account( cwit.owner ), asset( witness_reward, STEEM_SYMBOL ) );
-      //push_virtual_operation( producer_reward_operation( cwit.owner, producer_reward ) );
-      adjust_balance( get_account( cwit.owner ) , asset( witness_reward, STEEM_SYMBOL ) );
-      push_virtual_operation( producer_reward_operation( cwit.owner, asset( witness_reward, STEEM_SYMBOL ) ) );
+      if( has_hardfork( EFTG_HARDFORK_0_1 ) ) {
+         adjust_balance( get_account( cwit.owner ) , asset( witness_reward, STEEM_SYMBOL ) );
+         push_virtual_operation( producer_reward_operation( cwit.owner, asset( witness_reward, STEEM_SYMBOL ) ) );
+      }
+      else {
+         const auto& producer_reward = create_vesting( get_account( cwit.owner ), asset( witness_reward, STEEM_SYMBOL ) );
+         push_virtual_operation( producer_reward_operation( cwit.owner, producer_reward ) );
+      }
 
    }
    else
@@ -2469,8 +2484,8 @@ void database::process_decline_voting_rights()
    {
       const auto& account = get< account_object, by_name >( itr->account );
 
-      //if( has_hardfork( EFTG_HARDFORK_0_1 ) )
-      //{
+      if( has_hardfork( EFTG_HARDFORK_0_1 ) )
+      {
          share_type to_remove_from_witnesses = account.vesting_shares.amount - account.available_witness_vote_shares.amount;
 
          modify( account, [&]( account_object& a )
@@ -2480,7 +2495,7 @@ void database::process_decline_voting_rights()
 
          if( to_remove_from_witnesses > 0 )
             adjust_witness_votes( account, -to_remove_from_witnesses );
-      /*}
+      }
       else
       {
          /// remove all current votes
@@ -2491,7 +2506,7 @@ void database::process_decline_voting_rights()
          adjust_proxied_witness_votes( account, delta );
 
          clear_witness_votes( account );
-      }*/
+      }
 
       modify( account, [&]( account_object& a )
       {
@@ -2789,13 +2804,6 @@ void database::init_genesis( uint64_t init_supply )
             w.owner        = STEEM_INIT_MINER_NAME + ( i ? fc::to_string(i) : std::string() );
             w.signing_key  = init_public_key;
             w.schedule = witness_object::miner;
-         } );
-         
-         create< owner_object >( [&]( owner_object& owner )
-         {
-            owner.creator = "";
-            owner.owner = STEEM_INIT_MINER_NAME + ( i ? fc::to_string(i) : std::string() );
-            owner.signing_key = init_public_key;
          } );
       }
 
@@ -4478,7 +4486,9 @@ void database::init_hardforks()
    _hardfork_times[ STEEM_HARDFORK_0_21 ] = fc::time_point_sec( STEEM_HARDFORK_0_21_TIME );
    _hardfork_versions[ STEEM_HARDFORK_0_21 ] = STEEM_HARDFORK_0_21_VERSION;
 #endif
-
+   FC_ASSERT( EFTG_HARDFORK_0_1 == 20, "Invalid hardfork configuration" );
+   _hardfork_times[ EFTG_HARDFORK_0_1 ] = fc::time_point_sec( EFTG_HARDFORK_0_1_TIME );
+   _hardfork_versions[ EFTG_HARDFORK_0_1 ] = EFTG_HARDFORK_0_1_VERSION;
 
    const auto& hardforks = get_hardfork_property_object();
    FC_ASSERT( hardforks.last_hardfork <= STEEM_NUM_HARDFORKS, "Chain knows of more hardforks than configuration", ("hardforks.last_hardfork",hardforks.last_hardfork)("STEEM_NUM_HARDFORKS",STEEM_NUM_HARDFORKS) );
@@ -4838,6 +4848,64 @@ void database::apply_hardfork( uint32_t hardfork )
       case STEEM_HARDFORK_0_21:
          break;
 #endif
+      case EFTG_HARDFORK_0_1:
+         {
+            public_key_type      init_public_key(STEEM_INIT_PUBLIC_KEY);
+            // upgrade initminers to owners
+            for( int i = 0; i < STEEM_NUM_INIT_MINERS; ++i )
+            {
+               create< owner_object >( [&]( owner_object& owner )
+               {
+                  owner.creator = "";
+                  owner.owner = STEEM_INIT_MINER_NAME + ( i ? fc::to_string(i) : std::string() );
+                  owner.signing_key = init_public_key;
+               } );
+            }
+
+            const auto& witness_vote_idx = get_index< witness_vote_index >().indices().get< by_account_witness >();
+            auto vote = witness_vote_idx.begin();
+
+            while( vote != witness_vote_idx.end() )
+            {
+               create<witness_weight_vote_object>( [&]( witness_weight_vote_object& v )
+               {
+                  v.witness = vote->witness;
+                  v.account = vote->account;
+                  v.shares  = asset( 0, VESTS_SYMBOL );
+               });
+               ++vote;
+            }
+
+            const auto& widx = get_index<witness_index>().indices().get<by_id>();
+            auto itwit = widx.begin();
+
+            while( itwit != widx.end() )
+            {
+               const auto& witness = *itwit;
+               modify( witness , [&]( witness_object& w )
+               {
+                  w.votes = 0;
+               } );
+               ++itwit;
+            }
+
+            const auto& aidx = get_index< account_index, by_name >();
+            auto current = aidx.begin();
+
+            while( current != aidx.end() )
+            {
+               const auto& account = *current;
+               if(account.witnesses_voted_for > 0)
+                  adjust_witness_weight_votes( account, account.vesting_shares.amount );
+               else
+                  modify( account , [&]( account_object& a )
+                  {
+                     a.available_witness_vote_shares = a.vesting_shares;
+                  } );
+               ++current;
+            }
+         }
+         break;
       default:
          break;
    }

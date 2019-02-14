@@ -35,17 +35,18 @@
 #define STEEM_OWNER_UPDATE_LIMIT                          fc::seconds(0)
 #define STEEM_OWNER_AUTH_HISTORY_TRACKING_START_BLOCK_NUM 1
 
-#define STEEM_INIT_SUPPLY                     (int64_t( 250 ) * int64_t( 1000000 ) * int64_t( 1000 ))
+#define STEEM_INIT_SUPPLY                     (int64_t( 30 ) * int64_t( 1000000 ) * int64_t( 1000 ))
 
 /// Allows to limit number of total produced blocks.
 #define TESTNET_BLOCK_LIMIT                   (3000000)
 
 #else // IS LIVE STEEM NETWORK
 
-#define STEEM_BLOCKCHAIN_VERSION              ( version(0, 19, 12) )
+#define STEEM_BLOCKCHAIN_VERSION              ( version(0, 100, 0) )
 
+//#define STEEM_INIT_PUBLIC_KEY_STR             "EUR81ZR1cVqMWuMGhkXZdh3Sr67Ahwqu7onQb4Rg2me94BMm67cSv"
 #define STEEM_INIT_PUBLIC_KEY_STR             "EUR8PsyH8FSX7VPKg3ecKLD4khpkrUTYLJeWYcN8h2fJyhVnd1iHf"
-#define STEEM_CHAIN_ID_NAME "europe"
+#define STEEM_CHAIN_ID_NAME "eftg"
 #define STEEM_CHAIN_ID (fc::sha256::hash(STEEM_CHAIN_ID_NAME))
 #define STEEM_ADDRESS_PREFIX                  "EUR"
 
@@ -96,13 +97,13 @@
 #define STEEM_MAX_MINER_WITNESSES_HF17        0
 #define STEEM_MAX_RUNNER_WITNESSES_HF17       1
 
-#define STEEM_HARDFORK_REQUIRED_WITNESSES     1 // 17 of the 21 dpos witnesses (20 elected and 1 virtual time) required for hardfork. This guarantees 75% participation on all subsequent rounds.
+#define STEEM_HARDFORK_REQUIRED_WITNESSES     17 // 17 of the 21 dpos witnesses (20 elected and 1 virtual time) required for hardfork. This guarantees 75% participation on all subsequent rounds.
 #define STEEM_MAX_TIME_UNTIL_EXPIRATION       (60*60) // seconds,  aka: 1 hour
 #define STEEM_MAX_MEMO_SIZE                   2048
 #define STEEM_MAX_PROXY_RECURSION_DEPTH       4
 #define STEEM_VESTING_WITHDRAW_INTERVALS_PRE_HF_16 104
 #define STEEM_VESTING_WITHDRAW_INTERVALS      13
-#define STEEM_VESTING_WITHDRAW_INTERVAL_SECONDS (60*60*24*7) /// 1 week per interval
+#define STEEM_VESTING_WITHDRAW_INTERVAL_SECONDS 3//(60*60*24*7) /// 1 week per interval
 #define STEEM_MAX_WITHDRAW_ROUTES             10
 #define STEEM_SAVINGS_WITHDRAW_TIME        	(fc::days(3))
 #define STEEM_SAVINGS_WITHDRAW_REQUEST_LIMIT  100

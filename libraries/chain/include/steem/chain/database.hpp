@@ -357,6 +357,11 @@ namespace steem { namespace chain {
          /** this is called by `adjust_proxied_witness_votes` when account proxy to self */
          void adjust_witness_votes( const account_object& a, share_type delta );
 
+         /** this adjust the shares given from an account to witnesses depending on the share_type `delta`
+          * Used after EFTG_HARDFORK_0_1
+          */
+         void adjust_witness_weight_votes( const account_object& a, share_type delta );
+
          /** this updates the vote of a single witness as a result of a vote being added or removed*/
          void adjust_witness_vote( const witness_object& obj, share_type delta );
 
