@@ -94,6 +94,64 @@ struct api_operation_object
    legacy_operation     op;
 };
 
+struct api_witness_vote_object
+{
+   api_witness_vote_object( const database_api::api_witness_vote_object& w ) :
+      id( w.id ),
+      witness( w.witness ),
+      account( w.account )
+   {}
+
+   api_witness_vote_object() {}
+
+   witness_vote_id_type  id;
+   account_name_type     witness;
+   account_name_type     account;
+};
+
+struct api_witness_weight_vote_object
+{
+   api_witness_weight_vote_object( const database_api::api_witness_weight_vote_object& w ) :
+      id( w.id ),
+      witness( w.witness ),
+      account( w.account ),
+      shares( legacy_asset::from_asset(w.shares) )
+   {}
+
+   api_witness_weight_vote_object() {}
+
+   witness_weight_vote_id_type  id;
+   account_name_type            witness;
+   account_name_type            account;
+   legacy_asset                 shares;
+};
+
+struct api_witness_weight_vote_by_account_object
+{
+   api_witness_weight_vote_by_account_object( const database_api::api_witness_weight_vote_object& w ) :
+      witness( w.witness ),
+      shares( legacy_asset::from_asset(w.shares) )
+   {}
+
+   api_witness_weight_vote_by_account_object() {}
+
+   account_name_type            witness;
+   legacy_asset                 shares;
+};
+
+struct api_witness_weight_vote_by_witness_object
+{
+   api_witness_weight_vote_by_witness_object( const database_api::api_witness_weight_vote_object& w ) :
+      account( w.account ),
+      shares( legacy_asset::from_asset(w.shares) )
+   {}
+
+   api_witness_weight_vote_by_witness_object() {}
+
+   account_name_type            account;
+   legacy_asset                 shares;
+};
+
 struct api_account_object
 {
    api_account_object( const database_api::api_account_object& a ) :
@@ -242,6 +300,7 @@ struct extended_account : public api_account_object
    map< uint64_t, api_operation_object >   vote_history;
    map< uint64_t, api_operation_object >   other_history;
    set< string >                                            witness_votes;
+   vector< api_witness_weight_vote_by_account_object >      witness_weight_votes;
    vector< tags::tag_count_object >                         tags_usage;
    vector< follow::reblog_count >                           guest_bloggers;
 
@@ -1026,6 +1085,8 @@ DEFINE_API_ARGS( get_trade_history,                      vector< variant >,   ve
 DEFINE_API_ARGS( get_recent_trades,                      vector< variant >,   vector< market_trade > )
 DEFINE_API_ARGS( get_market_history,                     vector< variant >,   vector< market_history::bucket_object > )
 DEFINE_API_ARGS( get_market_history_buckets,             vector< variant >,   flat_set< uint32_t > )
+DEFINE_API_ARGS( get_witness_votes,                      vector< variant >,   vector< api_witness_vote_object > )
+DEFINE_API_ARGS( get_witness_weight_votes,               vector< variant >,   vector< api_witness_weight_vote_object > )
 
 #undef DEFINE_API_ARGS
 
@@ -1122,6 +1183,8 @@ public:
       (get_recent_trades)
       (get_market_history)
       (get_market_history_buckets)
+      (get_witness_votes)
+      (get_witness_weight_votes)
    )
 
    private:
@@ -1170,7 +1233,7 @@ FC_REFLECT( steem::plugins::condenser_api::api_account_object,
 
 FC_REFLECT_DERIVED( steem::plugins::condenser_api::extended_account, (steem::plugins::condenser_api::api_account_object),
             (average_bandwidth)(lifetime_bandwidth)(last_bandwidth_update)(average_market_bandwidth)(lifetime_market_bandwidth)(last_market_bandwidth_update)
-            (vesting_balance)(reputation)(transfer_history)(market_history)(post_history)(vote_history)(other_history)(witness_votes)(tags_usage)(guest_bloggers)(open_orders)(comments)(feed)(blog)(recent_replies)(recommended) )
+            (vesting_balance)(reputation)(transfer_history)(market_history)(post_history)(vote_history)(other_history)(witness_votes)(witness_weight_votes)(tags_usage)(guest_bloggers)(open_orders)(comments)(feed)(blog)(recent_replies)(recommended) )
 
 FC_REFLECT( steem::plugins::condenser_api::api_comment_object,
              (id)(author)(permlink)
@@ -1224,6 +1287,29 @@ FC_REFLECT( steem::plugins::condenser_api::api_witness_schedule_object,
              (max_miner_witnesses)
              (max_runner_witnesses)
              (hardfork_required_witnesses)
+          )
+
+FC_REFLECT( steem::plugins::condenser_api::api_witness_vote_object,
+             (id)
+             (witness)
+             (account)
+          )
+
+FC_REFLECT( steem::plugins::condenser_api::api_witness_weight_vote_object,
+             (id)
+             (witness)
+             (account)
+             (shares)
+          )
+
+FC_REFLECT( steem::plugins::condenser_api::api_witness_weight_vote_by_account_object,
+             (witness)
+             (shares)
+          )
+
+FC_REFLECT( steem::plugins::condenser_api::api_witness_weight_vote_by_witness_object,
+             (account)
+             (shares)
           )
 
 FC_REFLECT( steem::plugins::condenser_api::api_feed_history_object,

@@ -27,6 +27,7 @@ class database_api_impl
          (list_witnesses)
          (find_witnesses)
          (list_witness_votes)
+         (list_witness_weight_votes)
          (get_active_witnesses)
          (list_accounts)
          (find_accounts)
@@ -257,6 +258,42 @@ DEFINE_API_IMPL( database_api_impl, list_witness_votes )
             result.votes,
             args.limit,
             [&]( const witness_vote_object& v ){ return api_witness_vote_object( v ); } );
+         break;
+      }
+      default:
+         FC_ASSERT( false, "Unknown or unsupported sort order" );
+   }
+
+   return result;
+}
+
+DEFINE_API_IMPL( database_api_impl, list_witness_weight_votes )
+{
+   FC_ASSERT( args.limit <= DATABASE_API_SINGLE_QUERY_LIMIT );
+
+   list_witness_weight_votes_return result;
+   result.votes.reserve( args.limit );
+
+   switch( args.order )
+   {
+      case( by_account_witness ):
+      {
+         auto key = args.start.as< std::pair< account_name_type, account_name_type > >();
+         iterate_results< chain::witness_weight_vote_index, chain::by_account_witness >(
+            boost::make_tuple( key.first, key.second ),
+            result.votes,
+            args.limit,
+            [&]( const witness_weight_vote_object& v ){ return api_witness_weight_vote_object( v ); } );
+         break;
+      }
+      case( by_witness_account ):
+      {
+         auto key = args.start.as< std::pair< account_name_type, account_name_type > >();
+         iterate_results< chain::witness_weight_vote_index, chain::by_witness_account >(
+            boost::make_tuple( key.first, key.second ),
+            result.votes,
+            args.limit,
+            [&]( const witness_weight_vote_object& v ){ return api_witness_weight_vote_object( v ); } );
          break;
       }
       default:
@@ -1447,6 +1484,7 @@ DEFINE_READ_APIS( database_api,
    (list_witnesses)
    (find_witnesses)
    (list_witness_votes)
+   (list_witness_weight_votes)
    (get_active_witnesses)
    (list_accounts)
    (find_accounts)

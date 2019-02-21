@@ -134,6 +134,8 @@ namespace detail
             (get_recent_trades)
             (get_market_history)
             (get_market_history_buckets)
+            (get_witness_votes)
+            (get_witness_weight_votes)
          )
 
          void recursively_fetch_content( state& _state, tags::discussion& root, set<string>& referenced_accounts );
@@ -289,6 +291,7 @@ namespace detail
                            break;
                         case operation::tag<vote_operation>::value:
                         case operation::tag<account_witness_vote_operation>::value:
+                        case operation::tag<account_witness_weight_vote_operation>::value:
                         case operation::tag<account_witness_proxy_operation>::value:
                         //   eacnt.vote_history[item.first] =  item.second;
                            break;
@@ -884,6 +887,7 @@ namespace detail
 
       const auto& idx  = _db.get_index< account_index >().indices().get< by_name >();
       const auto& vidx = _db.get_index< witness_vote_index >().indices().get< by_account_witness >();
+      const auto& vwidx = _db.get_index< witness_weight_vote_index >().indices().get< by_account_witness >();
       vector< extended_account > results;
       results.reserve(names.size());
 
@@ -927,6 +931,13 @@ namespace detail
             while( vitr != vidx.end() && vitr->account == itr->name ) {
                results.back().witness_votes.insert( _db.get< witness_object, by_name >( vitr->witness ).owner );
                ++vitr;
+            }
+
+            auto vwitr = vwidx.lower_bound( boost::make_tuple( itr->name, account_name_type() ) );
+            while( vwitr != vwidx.end() && vwitr->account == itr->name ) {
+               api_witness_weight_vote_by_account_object vote(  );
+               results.back().witness_weight_votes.emplace_back( api_witness_weight_vote_by_account_object( database_api::api_witness_weight_vote_object( *vwitr ) ) );
+               ++vwitr;
             }
          }
       }
@@ -1967,6 +1978,62 @@ namespace detail
       return _market_history_api->get_market_history_buckets( {} ).bucket_sizes;
    }
 
+   DEFINE_API_IMPL( condenser_api_impl, get_witness_votes )
+   {
+      CHECK_ARG_SIZE( 4 )
+
+      database_api::list_witness_votes_args a;
+      account_name_type account = args[0].as< account_name_type >();
+      a.start = fc::variant( (vector< variant >){ args[0], args[1] } );
+      a.limit = args[2].as< uint32_t >();
+      a.order = args[3].as< database_api::sort_order_type >();
+
+      auto list = _database_api->list_witness_votes( a );
+
+      get_witness_votes_return result;
+
+      if( a.order == database_api::by_account_witness ) {
+         for( auto itr = list.votes.begin(); itr != list.votes.end() && itr->account == account; ++itr )
+         {
+            result.push_back( api_witness_vote_object( *itr ) );
+         }
+      }else if( a.order == database_api::by_witness_account ) {
+         for( auto itr = list.votes.begin(); itr != list.votes.end() && itr->witness == account; ++itr )
+         {
+            result.push_back( api_witness_vote_object( *itr ) );
+         }
+      }
+      return result;
+   }
+
+   DEFINE_API_IMPL( condenser_api_impl, get_witness_weight_votes )
+   {
+      CHECK_ARG_SIZE( 4 )
+
+      database_api::list_witness_weight_votes_args a;
+      account_name_type account = args[0].as< account_name_type >();
+      a.start = fc::variant( (vector< variant >){ args[0], args[1] } );
+      a.limit = args[2].as< uint32_t >();
+      a.order = args[3].as< database_api::sort_order_type >();
+
+      auto list = _database_api->list_witness_weight_votes( a );
+
+      get_witness_weight_votes_return result;
+
+      if( a.order == database_api::by_account_witness ) {
+         for( auto itr = list.votes.begin(); itr != list.votes.end() && itr->account == account; ++itr )
+         {
+            result.push_back( api_witness_weight_vote_object( *itr ) );
+         }
+      }else if( a.order == database_api::by_witness_account ) {
+         for( auto itr = list.votes.begin(); itr != list.votes.end() && itr->witness == account; ++itr )
+         {
+            result.push_back( api_witness_weight_vote_object( *itr ) );
+         }
+      }
+      return result;
+   }
+
    /**
     *  This call assumes root already stored as part of state, it will
     *  modify root.replies to contain links to the reply posts and then
@@ -2287,6 +2354,8 @@ DEFINE_READ_APIS( condenser_api,
    (get_trade_history)
    (get_recent_trades)
    (get_market_history)
+   (get_witness_votes)
+   (get_witness_weight_votes)
 )
 
 } } } // steem::plugins::condenser_api

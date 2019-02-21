@@ -44,6 +44,7 @@ class database_api
          (list_witnesses)
          (find_witnesses)
          (list_witness_votes)
+         (list_witness_weight_votes)
          (get_active_witnesses)
 
          //////////////

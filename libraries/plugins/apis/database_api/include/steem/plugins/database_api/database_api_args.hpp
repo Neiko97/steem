@@ -130,6 +130,19 @@ struct list_witness_votes_return
    vector< api_witness_vote_object > votes;
 };
 
+struct list_witness_weight_votes_args
+{
+   fc::variant       start;
+   uint32_t          limit;
+   sort_order_type   order;
+};
+
+struct list_witness_weight_votes_return
+{
+   vector< api_witness_weight_vote_object > votes;
+};
+
+
 
 typedef void_type get_active_witnesses_args;
 
@@ -613,6 +626,12 @@ FC_REFLECT( steem::plugins::database_api::list_witness_votes_args,
    (start)(limit)(order) )
 
 FC_REFLECT( steem::plugins::database_api::list_witness_votes_return,
+   (votes) )
+
+FC_REFLECT( steem::plugins::database_api::list_witness_weight_votes_args,
+   (start)(limit)(order) )
+
+FC_REFLECT( steem::plugins::database_api::list_witness_weight_votes_return,
    (votes) )
 
 FC_REFLECT( steem::plugins::database_api::get_active_witnesses_return,

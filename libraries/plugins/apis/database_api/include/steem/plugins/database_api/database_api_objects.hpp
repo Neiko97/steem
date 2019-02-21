@@ -495,6 +495,49 @@ struct api_witness_schedule_object
    uint8_t                    hardfork_required_witnesses;
 };
 
+struct api_witness_weight_vote_object
+{
+   api_witness_weight_vote_object( const witness_weight_vote_object& w ) :
+      id( w.id ),
+      witness( w.witness ),
+      account( w.account ),
+      shares( w.shares )
+   {}
+
+   api_witness_weight_vote_object() {}
+
+   witness_weight_vote_id_type  id;
+   account_name_type            witness;
+   account_name_type            account;
+   asset                        shares;
+};
+
+struct api_witness_weight_vote_by_account_object
+{
+   api_witness_weight_vote_by_account_object( const witness_weight_vote_object& w ) :
+      witness( w.witness ),
+      shares( w.shares )
+   {}
+
+   api_witness_weight_vote_by_account_object() {}
+
+   account_name_type            witness;
+   asset                        shares;
+};
+
+struct api_witness_weight_vote_by_witness_object
+{
+   api_witness_weight_vote_by_witness_object( const witness_weight_vote_object& w ) :
+      account( w.account ),
+      shares( w.shares )
+   {}
+
+   api_witness_weight_vote_by_witness_object() {}
+
+   account_name_type            account;
+   asset                        shares;
+};
+
 struct api_signed_block_object : public signed_block
 {
    api_signed_block_object( const signed_block& block ) : signed_block( block )
@@ -661,6 +704,23 @@ FC_REFLECT( steem::plugins::database_api::api_witness_schedule_object,
              (max_miner_witnesses)
              (max_runner_witnesses)
              (hardfork_required_witnesses)
+          )
+
+FC_REFLECT( steem::plugins::database_api::api_witness_weight_vote_object,
+             (id)
+             (witness)
+             (account)
+             (shares)
+          )
+
+FC_REFLECT( steem::plugins::database_api::api_witness_weight_vote_by_account_object,
+             (witness)
+             (shares)
+          )
+
+FC_REFLECT( steem::plugins::database_api::api_witness_weight_vote_by_witness_object,
+             (account)
+             (shares)
           )
 
 FC_REFLECT_DERIVED( steem::plugins::database_api::api_signed_block_object, (steem::protocol::signed_block),
