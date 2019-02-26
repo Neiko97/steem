@@ -82,6 +82,8 @@ namespace steem { namespace protocol {
             /// EFTG operations
             owner_create_operation,
             account_witness_weight_vote_operation,
+            sbd_create_operation,
+            sbd_burn_operation,
 
             /// virtual operations below this point
             fill_convert_request_operation,

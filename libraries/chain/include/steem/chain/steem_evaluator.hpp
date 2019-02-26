@@ -56,6 +56,8 @@ STEEM_DEFINE_EVALUATOR( claim_reward_balance2 )
 #endif
 STEEM_DEFINE_EVALUATOR( delegate_vesting_shares )
 STEEM_DEFINE_EVALUATOR( witness_set_properties )
+STEEM_DEFINE_EVALUATOR( sbd_create )
+STEEM_DEFINE_EVALUATOR( sbd_burn )
 #ifdef STEEM_ENABLE_SMT
 STEEM_DEFINE_EVALUATOR( smt_setup )
 STEEM_DEFINE_EVALUATOR( smt_cap_reveal )

@@ -1088,6 +1088,36 @@ namespace steem { namespace protocol {
       void get_required_active_authorities( flat_set< account_name_type >& a ) const { a.insert( delegator ); }
       void validate() const;
    };
+
+   /**
+    * Create new sbd. Only owners can perform this operation
+    */
+   struct sbd_create_operation : public base_operation
+   {
+      account_name_type owner;
+      asset             amount;
+      string            memo;
+
+      void get_required_active_authorities( flat_set<account_name_type>& a )const{ a.insert(owner); }
+      void get_required_owner_authorities( flat_set<account_name_type>& a )const { a.insert(owner); }
+
+      void validate()const;
+   };
+
+   /**
+    * Destroy sbd. Only owners can perform this operation
+    */
+   struct sbd_burn_operation : public base_operation
+   {
+      account_name_type owner;
+      asset             amount;
+      string            memo;
+
+      void get_required_active_authorities( flat_set<account_name_type>& a )const{ a.insert(owner); }
+      void get_required_owner_authorities( flat_set<account_name_type>& a )const { a.insert(owner); }
+
+      void validate()const;
+   };
 } } // steem::protocol
 
 
@@ -1197,3 +1227,5 @@ FC_REFLECT( steem::protocol::claim_reward_balance_operation, (account)(reward_st
 FC_REFLECT( steem::protocol::claim_reward_balance2_operation, (account)(extensions)(reward_tokens) )
 #endif
 FC_REFLECT( steem::protocol::delegate_vesting_shares_operation, (delegator)(delegatee)(vesting_shares) );
+FC_REFLECT( steem::protocol::sbd_create_operation, (owner)(amount)(memo) );
+FC_REFLECT( steem::protocol::sbd_burn_operation, (owner)(amount)(memo) );

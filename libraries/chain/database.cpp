@@ -2594,6 +2594,8 @@ void database::initialize_evaluators()
    _my->_evaluator_registry.register_evaluator< account_create_with_delegation_evaluator >();
    _my->_evaluator_registry.register_evaluator< delegate_vesting_shares_evaluator        >();
    _my->_evaluator_registry.register_evaluator< witness_set_properties_evaluator         >();
+   _my->_evaluator_registry.register_evaluator< sbd_create_evaluator                     >();
+   _my->_evaluator_registry.register_evaluator< sbd_burn_evaluator                       >();
 
 #ifdef STEEM_ENABLE_SMT
    _my->_evaluator_registry.register_evaluator< smt_setup_evaluator                      >();

@@ -699,4 +699,22 @@ namespace steem { namespace protocol {
       FC_ASSERT( vesting_shares >= asset( 0, VESTS_SYMBOL ), "Delegation cannot be negative" );
    }
 
+   void sbd_create_operation::validate()const
+   {
+      validate_account_name( owner );
+      FC_ASSERT( amount.symbol == SBD_SYMBOL, "Only EUR can be created" );
+      FC_ASSERT( amount.amount > 0, "Cannot create a negative amount" );
+      FC_ASSERT( memo.size() < STEEM_MAX_MEMO_SIZE, "Memo is too large" );
+      FC_ASSERT( fc::is_utf8( memo ), "Memo is not UTF8" );
+   }
+
+   void sbd_burn_operation::validate()const
+   {
+      validate_account_name( owner );
+      FC_ASSERT( amount.symbol == SBD_SYMBOL, "Only EUR can be burned" );
+      FC_ASSERT( amount.amount > 0, "Cannot burn a negative amount" );
+      FC_ASSERT( memo.size() < STEEM_MAX_MEMO_SIZE, "Memo is too large" );
+      FC_ASSERT( fc::is_utf8( memo ), "Memo is not UTF8" );
+   }
+
 } } // steem::protocol

@@ -2674,4 +2674,55 @@ void delegate_vesting_shares_evaluator::do_apply( const delegate_vesting_shares_
    }
 }
 
+void sbd_create_evaluator::do_apply( const sbd_create_operation& o )
+{
+   FC_ASSERT( _db.has_hardfork( EFTG_HARDFORK_0_1 ) , "This operation is available after EFTG HF 1." );
+
+   const auto& by_owner_name_idx = _db.get_index< owner_index >().indices().get< by_name >();
+   auto owner_itr = by_owner_name_idx.find( o.owner );
+   FC_ASSERT( owner_itr != by_owner_name_idx.end() , "The creator must be an Owner" );
+
+   const auto& dgp = _db.get_dynamic_global_properties();
+
+   _db.modify( *owner_itr, [&]( owner_object& owner )
+   {
+      owner.backed_sbd += o.amount;
+   });
+
+   _db.modify( dgp, [&]( dynamic_global_property_object& props)
+   {
+      props.current_sbd_supply += o.amount;
+   });
+
+   _db.adjust_balance( o.owner, o.amount );
+}
+
+void sbd_burn_evaluator::do_apply( const sbd_burn_operation& o )
+{
+   FC_ASSERT( _db.has_hardfork( EFTG_HARDFORK_0_1 ) , "This operation is available after EFTG HF 1." );
+
+   const auto& by_owner_name_idx = _db.get_index< owner_index >().indices().get< by_name >();
+   auto owner_itr = by_owner_name_idx.find( o.owner );
+   FC_ASSERT( owner_itr != by_owner_name_idx.end() , "The creator must be an Owner." );
+   FC_ASSERT( owner_itr->backed_sbd >= o.amount, "The amount to burn is bigger than the backed EUR." );
+
+   const auto& account = _db.get_account( o.owner );
+   FC_ASSERT( account.sbd_balance >= o.amount, "Account does not have sufficient funds for burn." );
+
+   const auto& dgp = _db.get_dynamic_global_properties();
+   FC_ASSERT( dgp.current_sbd_supply >= o.amount, "FATAL ERROR: The sbd supply is less than the amount to burn." );
+
+   _db.modify( *owner_itr, [&]( owner_object& owner )
+   {
+      owner.backed_sbd -= o.amount;
+   });
+
+   _db.modify( _db.get_dynamic_global_properties(), [&]( dynamic_global_property_object& props)
+   {
+      props.current_sbd_supply -= o.amount;
+   });
+
+   _db.adjust_balance( o.owner, -o.amount );
+}
+
 } } // steem::chain
