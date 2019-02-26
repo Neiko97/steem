@@ -3217,6 +3217,7 @@ void database::process_header_extensions( const signed_block& next_block )
 
 void database::update_median_feed() {
 try {
+   if( has_hardfork( EFTG_HARDFORK_0_1 ) ) return;
    if( (head_block_num() % STEEM_FEED_INTERVAL_BLOCKS) != 0 )
       return;
 
@@ -4054,7 +4055,7 @@ void database::modify_balance( const account_object& a, const asset& delta, bool
             }
             break;
          case STEEM_ASSET_NUM_SBD:
-            if( a.sbd_seconds_last_update != head_block_time() )
+            if( a.sbd_seconds_last_update != head_block_time() && !has_hardfork( EFTG_HARDFORK_0_1 ) )
             {
                acnt.sbd_seconds += fc::uint128_t(a.sbd_balance.amount.value) * (head_block_time() - a.sbd_seconds_last_update).to_seconds();
                acnt.sbd_seconds_last_update = head_block_time();
@@ -4852,8 +4853,11 @@ void database::apply_hardfork( uint32_t hardfork )
 #endif
       case EFTG_HARDFORK_0_1:
          {
+            /**
+             * upgrade initminers to owner accounts
+             */
             public_key_type      init_public_key(STEEM_INIT_PUBLIC_KEY);
-            // upgrade initminers to owners
+
             for( int i = 0; i < STEEM_NUM_INIT_MINERS; ++i )
             {
                create< owner_object >( [&]( owner_object& owner )
@@ -4864,6 +4868,9 @@ void database::apply_hardfork( uint32_t hardfork )
                } );
             }
 
+            /**
+             * Adjust witness votes using witness_vote_weight_index
+             */
             const auto& witness_vote_idx = get_index< witness_vote_index >().indices().get< by_account_witness >();
             auto vote = witness_vote_idx.begin();
 
@@ -4906,6 +4913,80 @@ void database::apply_hardfork( uint32_t hardfork )
                   } );
                ++current;
             }
+
+            /**
+             * Request conversions from sbd to steem
+             */
+            const auto& fhistory = get_feed_history();
+
+            if( !fhistory.current_median_history.is_null() )
+            {
+               current = aidx.begin();
+               while( current != aidx.end() )
+               {
+                  const auto& accnt = *current;
+                  if( accnt.sbd_balance > asset( 0, SBD_SYMBOL ) )
+                  {
+                     create<convert_request_object>( [&]( convert_request_object& obj )
+                     {
+                        obj.owner  = accnt.name;
+                        obj.amount = accnt.sbd_balance;
+                     });
+
+                     modify( accnt , [&]( account_object& a )
+                     {
+                        a.sbd_balance = asset( 0, SBD_SYMBOL );
+                     });
+                  }
+                  ++current;
+               }
+            }
+
+            /**
+             * Process all conversions from sbd to steem
+             */
+            if( !fhistory.current_median_history.is_null() ) {
+               const auto& request_by_date = get_index< convert_request_index >().indices().get< by_conversion_date >();
+               auto conv_itr = request_by_date.begin();
+
+               asset net_sbd( 0, SBD_SYMBOL );
+               asset net_steem( 0, STEEM_SYMBOL );
+
+               while( conv_itr != request_by_date.end() )
+               {
+                  auto amount_to_issue = conv_itr->amount * fhistory.current_median_history;
+
+                  adjust_balance( conv_itr->owner, amount_to_issue );
+
+                  net_sbd   += conv_itr->amount;
+                  net_steem += amount_to_issue;
+
+                  // push_virtual_operation( fill_convert_request_operation ( conv_itr->owner, conv_itr->requestid, conv_itr->amount, amount_to_issue ) );
+                  remove( *conv_itr );
+                  conv_itr = request_by_date.begin();
+               }
+
+               const auto& props = get_dynamic_global_properties();
+               modify( props, [&]( dynamic_global_property_object& p )
+               {
+                   p.current_supply += net_steem;
+                   p.current_sbd_supply -= net_sbd;
+                   p.virtual_supply += net_steem;
+                   p.virtual_supply -= net_sbd * get_feed_history().current_median_history;
+
+                   FC_ASSERT( p.current_sbd_supply.amount == 0, "SBD supply is not zero after the hardfork." );
+               } );
+            }
+
+            /**
+             * Feed price to null
+             */
+            modify( get_feed_history(), [&]( feed_history_object& fho )
+            {
+               price null_price;
+               fho.current_median_history = null_price;
+            });
+
          }
          break;
       default:

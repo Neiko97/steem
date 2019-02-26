@@ -1193,6 +1193,8 @@ void set_withdraw_vesting_route_evaluator::do_apply( const set_withdraw_vesting_
 
 void account_witness_proxy_evaluator::do_apply( const account_witness_proxy_operation& o )
 {
+   FC_ASSERT( !_db.has_hardfork( EFTG_HARDFORK_0_1 ) , "This operation is not available after EFTG Hardfork 1" );
+
    const auto& account = _db.get_account( o.account );
    FC_ASSERT( account.proxy != o.proxy, "Proxy must change." );
 
@@ -2037,6 +2039,8 @@ void pow2_evaluator::do_apply( const pow2_operation& o )
 
 void feed_publish_evaluator::do_apply( const feed_publish_operation& o )
 {
+   FC_ASSERT( !_db.has_hardfork( EFTG_HARDFORK_0_1 ) , "This operation is not available after EFTG Hardfork 1" );
+
    if( _db.has_hardfork( STEEM_HARDFORK_0_20__409 ) )
       FC_ASSERT( is_asset_type( o.exchange_rate.base, SBD_SYMBOL ) && is_asset_type( o.exchange_rate.quote, STEEM_SYMBOL ),
             "Price feed must be a SBD/STEEM price" );
@@ -2051,6 +2055,8 @@ void feed_publish_evaluator::do_apply( const feed_publish_operation& o )
 
 void convert_evaluator::do_apply( const convert_operation& o )
 {
+  FC_ASSERT( !_db.has_hardfork( EFTG_HARDFORK_0_1 ) , "This operation is not available after EFTG Hardfork 1" );
+
   FC_ASSERT( _db.get_balance( o.owner, o.amount.symbol ) >= o.amount, "Account does not have sufficient balance for conversion." );
 
   _db.adjust_balance( o.owner, -o.amount );
