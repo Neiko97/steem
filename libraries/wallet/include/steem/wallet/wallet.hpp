@@ -1083,6 +1083,32 @@ class wallet_api
          condenser_api::legacy_asset reward_sbd,
          condenser_api::legacy_asset reward_vests,
          bool broadcast );
+
+      /**
+       *  This method will create sbd. The creator must be an owner
+       *
+       *  @param owner The account creating the sbd
+       *  @param amount The amount of sbd to create
+       *  @param memo A memo for the transaction
+       */
+      condenser_api::legacy_signed_transaction create_sbd(
+         string owner,
+         condenser_api::legacy_asset amount,
+         string memo,
+         bool broadcast = false ) const;
+
+      /**
+       *  This method will destroy sbd. The account must be an owner
+       *
+       *  @param owner The account burning sbd
+       *  @param amount The amount of sbd to burn
+       *  @param memo A memo for the transaction
+       */
+      condenser_api::legacy_signed_transaction burn_sbd(
+         string owner,
+         condenser_api::legacy_asset amount,
+         string memo,
+         bool broadcast = false ) const;
 };
 
 struct plain_keys {
@@ -1180,6 +1206,8 @@ FC_API( steem::wallet::wallet_api,
         (decrypt_memo)
         (decline_voting_rights)
         (claim_reward_balance)
+        (create_sbd)
+        (burn_sbd)
 
         /// helper api
         (get_prototype_operation)

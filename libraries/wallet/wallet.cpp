@@ -2419,4 +2419,48 @@ condenser_api::legacy_signed_transaction wallet_api::follow( string follower, st
    return my->sign_transaction( trx, broadcast );
 }
 
+/**
+ * This method is used to create sbd
+ */
+condenser_api::legacy_signed_transaction wallet_api::create_sbd(
+   string owner,
+   condenser_api::legacy_asset amount,
+   string memo,
+   bool broadcast )const
+{ try {
+   FC_ASSERT( !is_locked() );
+   sbd_create_operation op;
+   op.owner = owner;
+   op.amount = amount.to_asset();
+   op.memo = memo;
+
+   signed_transaction tx;
+   tx.operations.push_back(op);
+   tx.validate();
+
+   return my->sign_transaction( tx, broadcast );
+} FC_CAPTURE_AND_RETHROW( (owner)(amount)(memo)(broadcast) ) }
+
+/**
+ * This method is used to burn sbd
+ */
+condenser_api::legacy_signed_transaction wallet_api::burn_sbd(
+   string owner,
+   condenser_api::legacy_asset amount,
+   string memo,
+   bool broadcast )const
+{ try {
+   FC_ASSERT( !is_locked() );
+   sbd_burn_operation op;
+   op.owner = owner;
+   op.amount = amount.to_asset();
+   op.memo = memo;
+
+   signed_transaction tx;
+   tx.operations.push_back(op);
+   tx.validate();
+
+   return my->sign_transaction( tx, broadcast );
+} FC_CAPTURE_AND_RETHROW( (owner)(amount)(memo)(broadcast) ) }
+
 } } // steem::wallet

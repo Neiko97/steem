@@ -1026,6 +1026,52 @@ namespace steem { namespace plugins { namespace condenser_api {
       legacy_asset      shares;
    };
 
+   struct legacy_sbd_create_operation
+   {
+      legacy_sbd_create_operation() {}
+      legacy_sbd_create_operation( const sbd_create_operation& op ) :
+         owner( op.owner ),
+         amount( legacy_asset::from_asset( op.amount ) ),
+         memo( op.memo )
+      {}
+
+      operator sbd_create_operation()const
+      {
+         sbd_create_operation op;
+         op.owner = owner;
+         op.amount = amount;
+         op.memo = memo;
+         return op;
+      }
+
+      account_name_type owner;
+      asset             amount;
+      string            memo;
+   };
+
+   struct legacy_sbd_burn_operation
+   {
+      legacy_sbd_burn_operation() {}
+      legacy_sbd_burn_operation( const sbd_burn_operation& op ) :
+         owner( op.owner ),
+         amount( legacy_asset::from_asset( op.amount ) ),
+         memo( op.memo )
+      {}
+
+      operator sbd_burn_operation()const
+      {
+         sbd_burn_operation op;
+         op.owner = owner;
+         op.amount = amount;
+         op.memo = memo;
+         return op;
+      }
+
+      account_name_type owner;
+      asset             amount;
+      string            memo;
+   };
+
    typedef fc::static_variant<
             legacy_vote_operation,
             legacy_comment_operation,
@@ -1072,6 +1118,8 @@ namespace steem { namespace plugins { namespace condenser_api {
             legacy_witness_set_properties_operation,
             legacy_owner_create_operation,
             legacy_account_witness_weight_vote_operation,
+            legacy_sbd_create_operation,
+            legacy_sbd_burn_operation,
             legacy_fill_convert_request_operation,
             legacy_author_reward_operation,
             legacy_curation_reward_operation,
@@ -1323,6 +1371,18 @@ namespace steem { namespace plugins { namespace condenser_api {
          return true;
       }
 
+      bool operator()( const sbd_create_operation& op )const
+      {
+         l_op = legacy_sbd_create_operation ( op );
+         return true;
+      }
+
+      bool operator()( const sbd_burn_operation& op )const
+      {
+         l_op = legacy_sbd_burn_operation ( op );
+         return true;
+      }
+
       // Should only be SMT ops
       template< typename T >
       bool operator()( const T& )const { return false; }
@@ -1499,6 +1559,16 @@ struct convert_from_legacy_operation_visitor
       return operation( account_witness_weight_vote_operation( op ) );
    }
 
+   operation operator()( const legacy_sbd_create_operation & op )const
+   {
+      return operation( sbd_create_operation( op ) );
+   }
+
+   operation operator()( const legacy_sbd_burn_operation & op )const
+   {
+      return operation( sbd_burn_operation( op ) );
+   }
+
    template< typename T >
    operation operator()( const T& t )const
    {
@@ -1623,5 +1693,7 @@ FC_REFLECT( steem::plugins::condenser_api::legacy_comment_benefactor_reward_oper
 FC_REFLECT( steem::plugins::condenser_api::legacy_producer_reward_operation, (producer)(vesting_shares) )
 FC_REFLECT( steem::plugins::condenser_api::legacy_claim_account_operation, (creator)(fee)(extensions) )
 FC_REFLECT( steem::plugins::condenser_api::legacy_account_witness_weight_vote_operation , (account)(witness)(shares) )
+FC_REFLECT( steem::plugins::condenser_api::legacy_sbd_create_operation, (owner)(amount)(memo) )
+FC_REFLECT( steem::plugins::condenser_api::legacy_sbd_burn_operation, (owner)(amount)(memo) )
 
 FC_REFLECT_TYPENAME( steem::plugins::condenser_api::legacy_operation )
