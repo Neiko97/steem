@@ -1045,7 +1045,7 @@ namespace steem { namespace plugins { namespace condenser_api {
       }
 
       account_name_type owner;
-      asset             amount;
+      legacy_asset      amount;
       string            memo;
    };
 
@@ -1068,7 +1068,7 @@ namespace steem { namespace plugins { namespace condenser_api {
       }
 
       account_name_type owner;
-      asset             amount;
+      legacy_asset      amount;
       string            memo;
    };
 
