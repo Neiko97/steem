@@ -277,6 +277,27 @@ namespace steem { namespace chain {
          protocol::curve_id                curation_reward_curve;
    };
 
+   class subscription_object : public object< subscription_object_type, subscription_object >
+   {
+      public:
+         template< typename Constructor, typename Allocator >
+         subscription_object( Constructor&& c, allocator< Allocator > a )
+         {
+            c( *this );
+         }
+
+         subscription_object() {}
+
+         subscription_id_type   id;
+         account_name_type      reader;
+         account_name_type      reporter;
+         time_point_sec         created;
+         time_point_sec         starting_from;
+         time_point_sec         expiration;
+         plan_name_type         plan;
+         uint32_t               remaining_documents = 0;
+   };
+
    struct by_price;
    struct by_expiration;
    struct by_account;
@@ -458,6 +479,31 @@ namespace steem { namespace chain {
       allocator< reward_fund_object >
    > reward_fund_index;
 
+   struct by_reader_reporter;
+   struct by_reporter_reader;
+   typedef multi_index_container<
+      subscription_object,
+      indexed_by<
+         ordered_unique< tag< by_id >, member< subscription_object, subscription_id_type, &subscription_object::id > >,
+         ordered_non_unique< tag< by_reader_reporter >,
+            composite_key< subscription_object,
+               member< subscription_object, account_name_type, &subscription_object::reader >,
+               member< subscription_object, account_name_type, &subscription_object::reporter >
+            >,
+            composite_key_compare< std::less< account_name_type >, std::less< account_name_type > >
+         >,
+         ordered_non_unique< tag< by_reporter_reader >,
+            composite_key< subscription_object,
+               member< subscription_object, account_name_type, &subscription_object::reporter >,
+               member< subscription_object, account_name_type, &subscription_object::reader >
+            >,
+            composite_key_compare< std::less< account_name_type >, std::less< account_name_type > >
+         >,
+         ordered_non_unique< tag< by_expiration >, member< subscription_object, time_point_sec, &subscription_object::expiration > >
+      >,
+      allocator< subscription_object >
+   > subscription_index;
+
 } } // steem::chain
 
 #include <steem/chain/comment_object.hpp>
@@ -511,3 +557,15 @@ FC_REFLECT( steem::chain::reward_fund_object,
             (curation_reward_curve)
          )
 CHAINBASE_SET_INDEX_TYPE( steem::chain::reward_fund_object, steem::chain::reward_fund_index )
+
+FC_REFLECT( steem::chain::subscription_object,
+            (id)
+            (reader)
+            (reporter)
+            (created)
+            (starting_from)
+            (expiration)
+            (plan)
+            (remaining_documents)
+         )
+CHAINBASE_SET_INDEX_TYPE( steem::chain::subscription_object, steem::chain::subscription_index )

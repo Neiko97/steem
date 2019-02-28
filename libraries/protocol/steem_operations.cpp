@@ -717,4 +717,24 @@ namespace steem { namespace protocol {
       FC_ASSERT( fc::is_utf8( memo ), "Memo is not UTF8" );
    }
 
+   void subscribe_operation::validate()const
+   {
+      validate_account_name( reader );
+      validate_account_name( reporter );
+   }
+
+   void set_plan_operation::validate()const
+   {
+      validate_account_name( owner );
+      validate_account_name( name );
+      FC_ASSERT( cost.symbol != VESTS_SYMBOL, "Payments with VESTS are not allowed." );
+      FC_ASSERT( cost.amount >= 0, "The cost cannot be negative" );
+      FC_ASSERT( period >= 0, "The period cannot be negative" );
+   }
+
+   void remove_plan_operation::validate()const
+   {
+      validate_account_name( owner );
+   }
+
 } } // steem::protocol

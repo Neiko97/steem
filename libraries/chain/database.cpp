@@ -2596,6 +2596,8 @@ void database::initialize_evaluators()
    _my->_evaluator_registry.register_evaluator< witness_set_properties_evaluator         >();
    _my->_evaluator_registry.register_evaluator< sbd_create_evaluator                     >();
    _my->_evaluator_registry.register_evaluator< sbd_burn_evaluator                       >();
+   _my->_evaluator_registry.register_evaluator< set_plan_evaluator                       >();
+   _my->_evaluator_registry.register_evaluator< subscribe_evaluator                      >();
 
 #ifdef STEEM_ENABLE_SMT
    _my->_evaluator_registry.register_evaluator< smt_setup_evaluator                      >();
@@ -2662,6 +2664,9 @@ void database::initialize_indexes()
    add_core_index< account_regular_balance_index           >(*this);
    add_core_index< account_rewards_balance_index           >(*this);
 #endif
+   add_core_index< subscription_index                      >(*this);
+   add_core_index< plan_index                              >(*this);
+   add_core_index< plan_item_index                         >(*this);
 
    _plugin_index_signal();
 }

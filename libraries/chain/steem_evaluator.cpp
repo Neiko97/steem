@@ -2731,4 +2731,133 @@ void sbd_burn_evaluator::do_apply( const sbd_burn_operation& o )
    _db.adjust_balance( o.owner, -o.amount );
 }
 
+void subscribe_evaluator::do_apply( const subscribe_operation& o )
+{
+   FC_ASSERT( _db.has_hardfork( EFTG_HARDFORK_0_1 ) , "This operation is available after EFTG HF 1." );
+
+   const auto& by_owner_name_idx = _db.get_index< plan_index >().indices().get< by_owner_name >();
+   auto plan_itr = by_owner_name_idx.find( boost::make_tuple( o.reporter, o.plan ) );
+
+   FC_ASSERT( plan_itr != by_owner_name_idx.end() , "The subscription plan does not exist." );
+
+   const auto& plan = *plan_itr;
+   const time_point_sec expiration = o.starting_from + fc::seconds(plan.period);
+
+   if( plan.number_documents < 0 ) { // unlimited access. In that case the periods should not overlap. But what happens if the user wants cover a little period that is empty between two previous subscriptions ? todo.
+      const auto& by_reader_reporter_idx = _db.get_index< subscription_index >().indices().get< by_reader_reporter >();
+      auto subscription_itr = by_reader_reporter_idx.find( boost::make_tuple( o.reader, o.reporter ) );
+      while( subscription_itr != by_reader_reporter_idx.end() && subscription_itr->reader == o.reader && subscription_itr->reporter == o.reporter )
+      {
+         const auto& cur_subscription = *subscription_itr;
+         FC_ASSERT( o.starting_from != cur_subscription.starting_from , "Account already has a subscription with the same starting date" );
+         if( o.starting_from > cur_subscription.starting_from )
+            FC_ASSERT( o.starting_from > cur_subscription.expiration , "The requested period overlaps with another subscription of the same plan" );
+         if( cur_subscription.starting_from > o.starting_from )
+            FC_ASSERT( cur_subscription.starting_from > expiration , "The requested period overlaps with another subscription of the same plan" );
+      }
+   }
+
+   FC_ASSERT( _db.get_balance( o.reader, plan.cost.symbol ) >= plan.cost, 
+                 "Account does not have sufficient funds for the subscription. ${c} required, ${p} provided.",
+                 ("c", plan.cost)
+                 ("p", _db.get_balance( o.reader, plan.cost.symbol ) ) );
+
+   _db.create< subscription_object >( [&]( subscription_object& subscription )
+   {
+      subscription.reporter = o.reporter;
+      subscription.reader = o.reader;
+      subscription.starting_from = o.starting_from;
+      subscription.expiration = expiration;
+      subscription.plan = o.plan;
+      subscription.remaining_documents = plan.number_documents;
+      subscription.created = _db.head_block_time();
+   });
+
+   _db.adjust_balance( o.reader,  -plan.cost );
+   _db.adjust_balance( o.reporter, plan.cost );
+}
+
+void remove_plan_items( database& db, const account_name_type& owner, const plan_name_type& name )
+{
+   const auto& by_owner_name_idx = db.get_index< plan_item_index >().indices().get< by_owner_name >();
+   auto plan_item_itr = by_owner_name_idx.lower_bound( boost::make_tuple( owner, name ) );
+   while( plan_item_itr != by_owner_name_idx.end() && plan_item_itr->owner == owner && plan_item_itr->name == name ) {
+      const auto& cur_plan_item = *plan_item_itr;
+      ++plan_item_itr;
+      db.remove(cur_plan_item);
+   }
+}
+
+void set_plan_evaluator::do_apply( const set_plan_operation& o )
+{
+   FC_ASSERT( _db.has_hardfork( EFTG_HARDFORK_0_1 ) , "This operation is available after EFTG HF 1." );
+
+   const owner_object* owner = _db.find_owner( o.owner );
+   FC_ASSERT( owner != nullptr, "Only owners can set plans" );
+
+   const auto& by_owner_name_idx = _db.get_index< plan_index >().indices().get< by_owner_name >();
+   auto plan_itr = by_owner_name_idx.find( boost::make_tuple( o.owner, o.name ) );
+
+   if( plan_itr == by_owner_name_idx.end() )
+   {
+      _db.create< plan_object >( [&]( plan_object& plan )
+      {
+         plan.owner = o.owner;
+         plan.name = o.name;
+         plan.cost = o.cost;
+         plan.period = o.period;
+         plan.number_documents = o.number_documents;
+         plan.last_update = _db.head_block_time();
+      });
+
+      for( const auto& id_item : o.id_items )
+      {
+         _db.create< plan_item_object >( [&]( plan_item_object& plan_item )
+         {
+            plan_item.id_item = id_item;
+            plan_item.owner = o.owner;
+            plan_item.name = o.name;
+         });
+      }
+   }
+   else
+   {
+      _db.modify( *plan_itr, [&]( plan_object& plan )
+      {
+         plan.owner = o.owner;
+         plan.name = o.name;
+         plan.cost = o.cost;
+         plan.period = o.period;
+         plan.number_documents = o.number_documents;
+         plan.last_update = _db.head_block_time();
+      });
+
+      remove_plan_items( _db, o.owner, o.name );
+      for( const auto& id_item : o.id_items )
+      {
+         _db.create< plan_item_object >( [&]( plan_item_object& plan_item )
+         {
+            plan_item.id_item = id_item;
+            plan_item.owner = o.owner;
+            plan_item.name = o.name;
+         });
+      }
+   }
+}
+
+void remove_plan_evaluator::do_apply( const remove_plan_operation& o )
+{
+   FC_ASSERT( _db.has_hardfork( EFTG_HARDFORK_0_1 ) , "This operation is available after EFTG HF 1." );
+
+   const auto& by_owner_name_idx = _db.get_index< plan_index >().indices().get< by_owner_name >();
+   auto plan_itr = by_owner_name_idx.find( boost::make_tuple( o.owner, o.name ) );
+
+   FC_ASSERT( plan_itr != by_owner_name_idx.end() , "The plan to be removed does not exist." );
+
+   const auto& cur_plan = *plan_itr;
+   _db.remove(cur_plan);
+   remove_plan_items( _db, o.owner, o.name );
+}
+
+
 } } // steem::chain

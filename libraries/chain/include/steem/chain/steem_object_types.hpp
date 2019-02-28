@@ -26,6 +26,8 @@ using steem::protocol::transaction_id_type;
 using steem::protocol::chain_id_type;
 using steem::protocol::account_name_type;
 using steem::protocol::share_type;
+using steem::protocol::plan_name_type;
+using steem::protocol::plan_item_id_item_type;
 
 using chainbase::shared_string;
 
@@ -75,6 +77,9 @@ enum object_type
    account_regular_balance_object_type,
    account_rewards_balance_object_type
 #endif
+   subscription_object_type,
+   plan_object_type,
+   plan_item_object_type
 };
 
 class dynamic_global_property_object;
@@ -116,6 +121,10 @@ class account_regular_balance_object;
 class account_rewards_balance_object;
 #endif
 
+class subscription_object;
+class plan_object;
+class plan_item_object;
+
 typedef oid< dynamic_global_property_object         > dynamic_global_property_id_type;
 typedef oid< account_object                         > account_id_type;
 typedef oid< account_authority_object               > account_authority_id_type;
@@ -154,6 +163,10 @@ typedef oid< smt_event_token_object                 > smt_event_token_id_type;
 typedef oid< account_regular_balance_object         > account_regular_balance_id_type;
 typedef oid< account_rewards_balance_object         > account_rewards_balance_id_type;
 #endif
+
+typedef oid< subscription_object                    > subscription_id_type;
+typedef oid< plan_object                            > plan_id_type;
+typedef oid< plan_item_object                       > plan_item_id_type;
 
 enum bandwidth_type
 {
@@ -254,6 +267,9 @@ FC_REFLECT_ENUM( steem::chain::object_type,
                  (account_regular_balance_object_type)
                  (account_rewards_balance_object_type)
 #endif
+                 (subscription_object_type)
+                 (plan_object_type)
+                 (plan_item_object_type)
                )
 
 #ifndef ENABLE_STD_ALLOCATOR

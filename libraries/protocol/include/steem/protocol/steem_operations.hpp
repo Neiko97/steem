@@ -1118,6 +1118,55 @@ namespace steem { namespace protocol {
 
       void validate()const;
    };
+
+   /**
+    * Create a subscription
+    */
+   struct subscribe_operation : public base_operation
+   {
+      account_name_type reader;
+      account_name_type reporter;
+      plan_name_type    plan;
+      time_point_sec    starting_from;
+
+      void get_required_active_authorities( flat_set<account_name_type>& a )const{ a.insert(reader); }
+      void get_required_owner_authorities( flat_set<account_name_type>& a )const { a.insert(reader); }
+
+      void validate()const;
+   };
+
+   /**
+    * Set a subscription plan
+    */
+   struct set_plan_operation : public base_operation
+   {
+      account_name_type              owner;
+      plan_name_type                 name;
+      asset                          cost = asset( 0, SBD_SYMBOL );
+      uint64_t                       period; // in seconds
+      uint32_t                       number_documents = 0;
+      vector<plan_item_id_item_type> id_items;
+
+      void get_required_active_authorities( flat_set<account_name_type>& a )const{ a.insert(owner); }
+      void get_required_owner_authorities( flat_set<account_name_type>& a )const { a.insert(owner); }
+
+      void validate()const;
+   };
+
+   /**
+    * Remove a subscription plan
+    */
+   struct remove_plan_operation : public base_operation
+   {
+      account_name_type              owner;
+      plan_name_type                 name;
+      
+      void get_required_active_authorities( flat_set<account_name_type>& a )const{ a.insert(owner); }
+      void get_required_owner_authorities( flat_set<account_name_type>& a )const { a.insert(owner); }
+
+      void validate()const;
+   };
+
 } } // steem::protocol
 
 
@@ -1229,3 +1278,6 @@ FC_REFLECT( steem::protocol::claim_reward_balance2_operation, (account)(extensio
 FC_REFLECT( steem::protocol::delegate_vesting_shares_operation, (delegator)(delegatee)(vesting_shares) );
 FC_REFLECT( steem::protocol::sbd_create_operation, (owner)(amount)(memo) );
 FC_REFLECT( steem::protocol::sbd_burn_operation, (owner)(amount)(memo) );
+FC_REFLECT( steem::protocol::subscribe_operation, (reader)(reporter)(plan)(starting_from) )
+FC_REFLECT( steem::protocol::set_plan_operation, (owner)(name)(cost)(period)(number_documents)(id_items) )
+FC_REFLECT( steem::protocol::remove_plan_operation, (owner)(name) )

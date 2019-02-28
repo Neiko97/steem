@@ -84,6 +84,9 @@ namespace steem { namespace protocol {
             account_witness_weight_vote_operation,
             sbd_create_operation,
             sbd_burn_operation,
+            subscribe_operation,
+            set_plan_operation,
+            remove_plan_operation,
 
             /// virtual operations below this point
             fill_convert_request_operation,
