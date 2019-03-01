@@ -30,6 +30,7 @@ class database_api_impl
          (list_witness_weight_votes)
          (get_active_witnesses)
          (list_accounts)
+         (list_subscriptions)
          (find_accounts)
          (list_owner_histories)
          (find_owner_histories)
@@ -378,6 +379,42 @@ DEFINE_API_IMPL( database_api_impl, find_accounts )
       auto acct = _db.find< chain::account_object, chain::by_name >( a );
       if( acct != nullptr )
          result.accounts.push_back( api_account_object( *acct, _db ) );
+   }
+
+   return result;
+}
+
+DEFINE_API_IMPL( database_api_impl, list_subscriptions )
+{
+   FC_ASSERT( args.limit <= DATABASE_API_SINGLE_QUERY_LIMIT );
+
+   list_subscriptions_return result;
+   result.subscriptions.reserve( args.limit );
+
+   switch( args.order )
+   {
+      case( by_reader_reporter ):
+      {
+         auto key = args.start.as< std::pair< account_name_type, account_name_type > >();
+         iterate_results< chain::subscription_index, chain::by_reader_reporter >(
+            boost::make_tuple( key.first, key.second ),
+            result.subscriptions,
+            args.limit,
+            [&]( const subscription_object& v ){ return api_subscription_object( v ); } );
+         break;
+      }
+      case( by_reporter_reader ):
+      {
+         auto key = args.start.as< std::pair< account_name_type, account_name_type > >();
+         iterate_results< chain::subscription_index, chain::by_reporter_reader >(
+            boost::make_tuple( key.first, key.second ),
+            result.subscriptions,
+            args.limit,
+            [&]( const subscription_object& v ){ return api_subscription_object( v ); } );
+         break;
+      }
+      default:
+         FC_ASSERT( false, "Unknown or unsupported sort order" );
    }
 
    return result;
@@ -1487,6 +1524,7 @@ DEFINE_READ_APIS( database_api,
    (list_witness_weight_votes)
    (get_active_witnesses)
    (list_accounts)
+   (list_subscriptions)
    (find_accounts)
    (list_owner_histories)
    (find_owner_histories)

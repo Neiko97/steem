@@ -44,7 +44,10 @@ enum sort_order_type
    by_author_last_update,
    by_comment_voter,
    by_voter_comment,
-   by_price
+   by_price,
+   by_reader_reporter,
+   by_reporter_reader,
+   by_owner_name
 };
 
 /* get_config */
@@ -142,6 +145,17 @@ struct list_witness_weight_votes_return
    vector< api_witness_weight_vote_object > votes;
 };
 
+struct list_subscriptions_args
+{
+   fc::variant       start;
+   uint32_t          limit;
+   sort_order_type   order;
+};
+
+struct list_subscriptions_return
+{
+   vector< api_subscription_object > subscriptions;
+};
 
 
 typedef void_type get_active_witnesses_args;
@@ -608,7 +622,10 @@ FC_REFLECT_ENUM( steem::plugins::database_api::sort_order_type,
    (by_author_last_update)
    (by_comment_voter)
    (by_voter_comment)
-   (by_price) )
+   (by_price)
+   (by_reader_reporter)
+   (by_reporter_reader)
+   (by_owner_name) )
 
 FC_REFLECT( steem::plugins::database_api::get_reward_funds_return,
    (funds) )
@@ -633,6 +650,12 @@ FC_REFLECT( steem::plugins::database_api::list_witness_weight_votes_args,
 
 FC_REFLECT( steem::plugins::database_api::list_witness_weight_votes_return,
    (votes) )
+
+FC_REFLECT( steem::plugins::database_api::list_subscriptions_args,
+   (start)(limit)(order) )
+
+FC_REFLECT( steem::plugins::database_api::list_subscriptions_return,
+   (subscriptions) )
 
 FC_REFLECT( steem::plugins::database_api::get_active_witnesses_return,
    (witnesses) )

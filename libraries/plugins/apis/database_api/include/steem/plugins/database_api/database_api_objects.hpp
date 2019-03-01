@@ -182,6 +182,55 @@ struct api_owner_object
    asset                         backed_sbd;
 };
 
+struct api_plan_object
+{
+   api_plan_object( const plan_object& o):
+      id( o.id ),
+      owner( o.owner ),
+      name( o.name ),
+      cost( o.cost ),
+      period( o.period ),
+      number_documents( o.number_documents ),
+      last_update( o.last_update )      
+   {}
+
+   api_plan_object() {}
+
+   plan_id_type        id;
+   account_name_type   owner;
+   plan_name_type      name;
+   asset               cost;
+   uint64_t            period; // in seconds
+   uint32_t            number_documents = 0;
+   time_point_sec      last_update;
+   vector< uint16_t >  id_items;
+};
+
+struct api_subscription_object
+{
+   api_subscription_object( const subscription_object& o):
+      id( o.id ),
+      reader( o.reader ),
+      reporter( o.reporter ),
+      created( o.created ),
+      starting_from( o.starting_from ),
+      expiration( o.expiration ),
+      plan( o.plan ),
+      remaining_documents( o.remaining_documents )
+   {}
+
+   api_subscription_object() {}
+
+   subscription_id_type   id;
+   account_name_type      reader;
+   account_name_type      reporter;
+   time_point_sec         created;
+   time_point_sec         starting_from;
+   time_point_sec         expiration;
+   plan_name_type         plan;
+   uint32_t               remaining_documents = 0;
+};
+
 struct api_account_object
 {
    api_account_object( const account_object& a, const database& db ) :
@@ -657,6 +706,28 @@ FC_REFLECT( steem::plugins::database_api::api_owner_object,
              (signing_key)
              (role)
              (backed_sbd)
+          )
+
+FC_REFLECT( steem::plugins::database_api::api_plan_object,
+             (id)
+             (owner)
+             (name)
+             (cost)
+             (period)
+             (number_documents)
+             (last_update)
+             (id_items)
+          )
+
+FC_REFLECT( steem::plugins::database_api::api_subscription_object,
+             (id)
+             (reader)
+             (reporter)
+             (created)
+             (starting_from)
+             (expiration)
+             (plan)
+             (remaining_documents)
           )
 
 FC_REFLECT( steem::plugins::database_api::api_savings_withdraw_object,

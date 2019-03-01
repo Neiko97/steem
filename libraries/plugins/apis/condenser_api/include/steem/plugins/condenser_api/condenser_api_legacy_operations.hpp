@@ -66,6 +66,8 @@ namespace steem { namespace plugins { namespace condenser_api {
    typedef shutdown_witness_operation             legacy_shutdown_witness_operation;
    typedef hardfork_operation                     legacy_hardfork_operation;
    typedef comment_payout_update_operation        legacy_comment_payout_update_operation;
+   typedef subscribe_operation                    legacy_subscribe_operation;
+   typedef remove_plan_operation                  legacy_remove_plan_operation;
 
    struct legacy_price
    {
@@ -1072,6 +1074,45 @@ namespace steem { namespace plugins { namespace condenser_api {
       string            memo;
    };
 
+   struct legacy_set_plan_operation
+   {
+      legacy_set_plan_operation() {}
+      legacy_set_plan_operation( const set_plan_operation& op ) :
+         owner( op.owner ),
+         name( op.name ),
+         cost( legacy_asset::from_asset( op.cost ) ),
+         period( op.period ),
+         number_documents( op.number_documents )
+      {
+         for( auto& id_item : op.id_items )
+         {
+            id_items.push_back( id_item );
+         }
+      }
+
+      operator set_plan_operation()const
+      {
+         set_plan_operation op;
+         op.owner = owner;
+         op.name = name;
+         op.cost = cost;
+         op.period = period;
+         op.number_documents = number_documents;
+         for( auto& id_item : id_items )
+         {
+            op.id_items.push_back( id_item );
+         }
+         return op;
+      }
+
+      account_name_type              owner;
+      plan_name_type                 name;
+      legacy_asset                   cost;
+      uint64_t                       period; // in seconds
+      uint32_t                       number_documents = 0;
+      vector<plan_item_id_item_type> id_items;
+   };
+
    typedef fc::static_variant<
             legacy_vote_operation,
             legacy_comment_operation,
@@ -1120,6 +1161,10 @@ namespace steem { namespace plugins { namespace condenser_api {
             legacy_account_witness_weight_vote_operation,
             legacy_sbd_create_operation,
             legacy_sbd_burn_operation,
+            legacy_subscribe_operation,
+            legacy_set_plan_operation,
+            legacy_remove_plan_operation,
+            
             legacy_fill_convert_request_operation,
             legacy_author_reward_operation,
             legacy_curation_reward_operation,
@@ -1383,6 +1428,24 @@ namespace steem { namespace plugins { namespace condenser_api {
          return true;
       }
 
+      bool operator()( const subscribe_operation& op )const
+      {
+         l_op = legacy_subscribe_operation ( op );
+         return true;
+      }
+
+      bool operator()( const set_plan_operation& op )const
+      {
+         l_op = legacy_set_plan_operation ( op );
+         return true;
+      }
+
+      bool operator()( const remove_plan_operation& op )const
+      {
+         l_op = legacy_remove_plan_operation ( op );
+         return true;
+      }
+
       // Should only be SMT ops
       template< typename T >
       bool operator()( const T& )const { return false; }
@@ -1569,6 +1632,21 @@ struct convert_from_legacy_operation_visitor
       return operation( sbd_burn_operation( op ) );
    }
 
+   operation operator()( const legacy_subscribe_operation & op )const
+   {
+      return operation( subscribe_operation( op ) );
+   }
+
+   operation operator()( const legacy_set_plan_operation & op )const
+   {
+      return operation( set_plan_operation( op ) );
+   }
+
+   operation operator()( const legacy_remove_plan_operation & op )const
+   {
+      return operation( remove_plan_operation( op ) );
+   }
+
    template< typename T >
    operation operator()( const T& t )const
    {
@@ -1695,5 +1773,6 @@ FC_REFLECT( steem::plugins::condenser_api::legacy_claim_account_operation, (crea
 FC_REFLECT( steem::plugins::condenser_api::legacy_account_witness_weight_vote_operation , (account)(witness)(shares) )
 FC_REFLECT( steem::plugins::condenser_api::legacy_sbd_create_operation, (owner)(amount)(memo) )
 FC_REFLECT( steem::plugins::condenser_api::legacy_sbd_burn_operation, (owner)(amount)(memo) )
+FC_REFLECT( steem::plugins::condenser_api::legacy_set_plan_operation, (owner)(name)(cost)(period)(number_documents)(id_items) )
 
 FC_REFLECT_TYPENAME( steem::plugins::condenser_api::legacy_operation )

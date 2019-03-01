@@ -136,6 +136,7 @@ namespace detail
             (get_market_history_buckets)
             (get_witness_votes)
             (get_witness_weight_votes)
+            (get_subscriptions)
          )
 
          void recursively_fetch_content( state& _state, tags::discussion& root, set<string>& referenced_accounts );
@@ -865,7 +866,9 @@ namespace detail
       vector< account_name_type > names = args[0].as< vector< account_name_type > >();
       
       const auto& idx = _db.get_index< owner_index >().indices().get< by_name >();
-      vector< api_owner_object > results;
+      const auto& plan_idx = _db.get_index< plan_index >().indices().get< by_owner_name >();
+      const auto& plan_item_idx = _db.get_index< plan_item_index >().indices().get< by_owner_name >();
+      vector< extended_owner > results;
       results.reserve(names.size());
       
       for( const auto& name: names )
@@ -873,7 +876,19 @@ namespace detail
          auto itr = idx.find( name );
          if ( itr != idx.end() )
          {
-            results.emplace_back( api_owner_object( database_api::api_owner_object( *itr ) ) );
+            results.emplace_back( extended_owner( database_api::api_owner_object( *itr ) ) );
+            vector< uint16_t > id_items;
+            auto pitr = plan_idx.lower_bound( boost::make_tuple( itr->owner, plan_name_type() ) );
+            while( pitr != plan_idx.end() && pitr->owner == itr->owner ) {
+               results.back().plans.emplace_back( api_plan_object( database_api::api_plan_object( *pitr ) ) );
+
+               auto pitem_itr = plan_item_idx.lower_bound( boost::make_tuple( itr->owner, pitr->name ) );
+               while( pitem_itr != plan_item_idx.end() && pitem_itr->owner == itr->owner && pitem_itr->name == pitr->name ) {
+                  results.back().plans.back().id_items.emplace_back( pitem_itr->id_item );
+                  ++pitem_itr;
+               }
+               ++pitr;
+            }
          }
       }
       
@@ -888,6 +903,7 @@ namespace detail
       const auto& idx  = _db.get_index< account_index >().indices().get< by_name >();
       const auto& vidx = _db.get_index< witness_vote_index >().indices().get< by_account_witness >();
       const auto& vwidx = _db.get_index< witness_weight_vote_index >().indices().get< by_account_witness >();
+      const auto& sidx = _db.get_index< subscription_index >().indices().get< by_reader_reporter >();
       vector< extended_account > results;
       results.reserve(names.size());
 
@@ -935,9 +951,15 @@ namespace detail
 
             auto vwitr = vwidx.lower_bound( boost::make_tuple( itr->name, account_name_type() ) );
             while( vwitr != vwidx.end() && vwitr->account == itr->name ) {
-               api_witness_weight_vote_by_account_object vote(  );
+               //api_witness_weight_vote_by_account_object vote(  );
                results.back().witness_weight_votes.emplace_back( api_witness_weight_vote_by_account_object( database_api::api_witness_weight_vote_object( *vwitr ) ) );
                ++vwitr;
+            }
+
+            auto sitr = sidx.lower_bound( boost::make_tuple( itr->name, account_name_type() ) );
+            while( sitr != sidx.end() && sitr->reader == itr->name ) {
+               results.back().subscriptions.emplace_back( api_subscription_object( database_api::api_subscription_object( *sitr ) ) );
+               ++sitr;
             }
          }
       }
@@ -2034,6 +2056,34 @@ namespace detail
       return result;
    }
 
+   DEFINE_API_IMPL( condenser_api_impl, get_subscriptions )
+   {
+      CHECK_ARG_SIZE( 4 )
+
+      database_api::list_subscriptions_args a;
+      account_name_type account = args[0].as< account_name_type >();
+      a.start = fc::variant( (vector< variant >){ args[0], args[1] } );
+      a.limit = args[2].as< uint32_t >();
+      a.order = args[3].as< database_api::sort_order_type >();
+
+      auto list = _database_api->list_subscriptions( a );
+
+      get_subscriptions_return result;
+
+      if( a.order == database_api::by_reader_reporter ) {
+         for( auto itr = list.subscriptions.begin(); itr != list.subscriptions.end() && itr->reader == account; ++itr )
+         {
+            result.push_back( api_subscription_object( *itr ) );
+         }
+      }else if( a.order == database_api::by_reporter_reader ) {
+         for( auto itr = list.subscriptions.begin(); itr != list.subscriptions.end() && itr->reporter == account; ++itr )
+         {
+            result.push_back( api_subscription_object( *itr ) );
+         }
+      }
+      return result;
+   }
+
    /**
     *  This call assumes root already stored as part of state, it will
     *  modify root.replies to contain links to the reply posts and then
@@ -2356,6 +2406,7 @@ DEFINE_READ_APIS( condenser_api,
    (get_market_history)
    (get_witness_votes)
    (get_witness_weight_votes)
+   (get_subscriptions)
 )
 
 } } } // steem::plugins::condenser_api

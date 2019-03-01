@@ -279,6 +279,31 @@ struct api_account_object
    time_point_sec    last_root_post;
 };
 
+struct api_subscription_object
+{
+   api_subscription_object( const database_api::api_subscription_object& a ) :
+      id( a.id ),
+      reader( a.reader ),
+      reporter( a.reporter ),
+      created( a.created ),
+      starting_from( a.starting_from ),
+      expiration( a.expiration ),
+      plan( a.plan ),
+      remaining_documents( a.remaining_documents )
+   {}
+
+   api_subscription_object(){}
+
+   subscription_id_type   id;
+   account_name_type      reader;
+   account_name_type      reporter;
+   time_point_sec         created;
+   time_point_sec         starting_from;
+   time_point_sec         expiration;
+   plan_name_type         plan;
+   uint32_t               remaining_documents;
+};
+
 struct extended_account : public api_account_object
 {
    extended_account(){}
@@ -303,6 +328,7 @@ struct extended_account : public api_account_object
    vector< api_witness_weight_vote_by_account_object >      witness_weight_votes;
    vector< tags::tag_count_object >                         tags_usage;
    vector< follow::reblog_count >                           guest_bloggers;
+   vector< api_subscription_object >                        subscriptions;
 
    optional< map< uint32_t, api_limit_order_object > >      open_orders;
    optional< vector< string > >                             comments;         /// permlinks for this user
@@ -310,6 +336,35 @@ struct extended_account : public api_account_object
    optional< vector< string > >                             feed;             /// feed posts for this user
    optional< vector< string > >                             recent_replies;   /// blog posts for this user
    optional< vector< string > >                             recommended;      /// posts recommened for this user
+};
+
+struct api_plan_object
+{
+   api_plan_object( const database_api::api_plan_object& o):
+      id( o.id ),
+      owner( o.owner ),
+      name( o.name ),
+      cost( legacy_asset::from_asset( o.cost ) ),
+      period( o.period ),
+      number_documents( o.number_documents ),
+      last_update( o.last_update )      
+   {
+      for( auto& id_item : o.id_items )
+      {
+         id_items.push_back( id_item );
+      }
+   }
+
+   api_plan_object() {}
+
+   plan_id_type        id;
+   account_name_type   owner;
+   plan_name_type      name;
+   legacy_asset        cost;
+   uint64_t            period; // in seconds
+   uint32_t            number_documents = 0;
+   time_point_sec      last_update;
+   vector< uint16_t >  id_items;
 };
 
 struct api_owner_object
@@ -333,6 +388,15 @@ struct api_owner_object
    public_key_type   signing_key;
    owner_object::owner_role_type role;
    legacy_asset      backed_sbd;
+};
+
+struct extended_owner : public api_owner_object
+{
+   extended_owner(){}
+   extended_owner( const database_api::api_owner_object& o ) :
+      api_owner_object( o ) {}
+
+   vector< api_plan_object >    plans;   
 };
 
 struct api_comment_object
@@ -1018,7 +1082,7 @@ DEFINE_API_ARGS( get_next_scheduled_hardfork,            vector< variant >,   sc
 DEFINE_API_ARGS( get_reward_fund,                        vector< variant >,   api_reward_fund_object )
 DEFINE_API_ARGS( get_key_references,                     vector< variant >,   vector< vector< account_name_type > > )
 DEFINE_API_ARGS( get_accounts,                           vector< variant >,   vector< extended_account > )
-DEFINE_API_ARGS( get_owners,                             vector< variant >,   vector< api_owner_object > )
+DEFINE_API_ARGS( get_owners,                             vector< variant >,   vector< extended_owner > )
 DEFINE_API_ARGS( get_account_references,                 vector< variant >,   vector< account_id_type > )
 DEFINE_API_ARGS( lookup_account_names,                   vector< variant >,   vector< optional< api_account_object > > )
 DEFINE_API_ARGS( lookup_accounts,                        vector< variant >,   set< string > )
@@ -1087,6 +1151,7 @@ DEFINE_API_ARGS( get_market_history,                     vector< variant >,   ve
 DEFINE_API_ARGS( get_market_history_buckets,             vector< variant >,   flat_set< uint32_t > )
 DEFINE_API_ARGS( get_witness_votes,                      vector< variant >,   vector< api_witness_vote_object > )
 DEFINE_API_ARGS( get_witness_weight_votes,               vector< variant >,   vector< api_witness_weight_vote_object > )
+DEFINE_API_ARGS( get_subscriptions,                      vector< variant >,   vector< api_subscription_object > )
 
 #undef DEFINE_API_ARGS
 
@@ -1185,6 +1250,7 @@ public:
       (get_market_history_buckets)
       (get_witness_votes)
       (get_witness_weight_votes)
+      (get_subscriptions)
    )
 
    private:
@@ -1214,6 +1280,12 @@ FC_REFLECT( steem::plugins::condenser_api::api_operation_object,
 FC_REFLECT( steem::plugins::condenser_api::api_owner_object,
              (id)(owner)(created)(creator)(signing_key)(role)(backed_sbd) )
 
+FC_REFLECT( steem::plugins::condenser_api::api_plan_object,
+             (id)(owner)(name)(cost)(period)(number_documents)(last_update)(id_items) )
+
+FC_REFLECT( steem::plugins::condenser_api::api_subscription_object,
+             (id)(reader)(reporter)(created)(starting_from)(expiration)(plan)(remaining_documents) )
+
 FC_REFLECT( steem::plugins::condenser_api::api_account_object,
              (id)(name)(owner)(active)(posting)(memo_key)(json_metadata)(proxy)(last_owner_update)(last_account_update)
              (created)(mined)
@@ -1233,7 +1305,10 @@ FC_REFLECT( steem::plugins::condenser_api::api_account_object,
 
 FC_REFLECT_DERIVED( steem::plugins::condenser_api::extended_account, (steem::plugins::condenser_api::api_account_object),
             (average_bandwidth)(lifetime_bandwidth)(last_bandwidth_update)(average_market_bandwidth)(lifetime_market_bandwidth)(last_market_bandwidth_update)
-            (vesting_balance)(reputation)(transfer_history)(market_history)(post_history)(vote_history)(other_history)(witness_votes)(witness_weight_votes)(tags_usage)(guest_bloggers)(open_orders)(comments)(feed)(blog)(recent_replies)(recommended) )
+            (vesting_balance)(reputation)(transfer_history)(market_history)(post_history)(vote_history)(other_history)(witness_votes)(witness_weight_votes)(tags_usage)(guest_bloggers)(subscriptions)(open_orders)(comments)(feed)(blog)(recent_replies)(recommended) )
+
+FC_REFLECT_DERIVED( steem::plugins::condenser_api::extended_owner, (steem::plugins::condenser_api::api_owner_object),
+            (plans) )
 
 FC_REFLECT( steem::plugins::condenser_api::api_comment_object,
              (id)(author)(permlink)
