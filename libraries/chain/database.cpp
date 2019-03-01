@@ -2597,6 +2597,7 @@ void database::initialize_evaluators()
    _my->_evaluator_registry.register_evaluator< sbd_create_evaluator                     >();
    _my->_evaluator_registry.register_evaluator< sbd_burn_evaluator                       >();
    _my->_evaluator_registry.register_evaluator< set_plan_evaluator                       >();
+   _my->_evaluator_registry.register_evaluator< remove_plan_evaluator                    >();
    _my->_evaluator_registry.register_evaluator< subscribe_evaluator                      >();
 
 #ifdef STEEM_ENABLE_SMT
