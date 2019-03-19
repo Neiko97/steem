@@ -81,7 +81,7 @@ int main( int argc, char** argv )
          ("rpc-http-allowip", bpo::value<vector<string>>()->multitoken(), "Allows only specified IPs to connect to the HTTP endpoint" )
          ("wallet-file,w", bpo::value<string>()->implicit_value("wallet.json"), "wallet to load")
 //#ifdef IS_TEST_NET
-         ("chain-id", bpo::value< std::string >()->implicit_value( STEEM_CHAIN_ID_NAME ), "chain ID to connect to")
+         ("chain-id", bpo::value< std::string >()->default_value( STEEM_CHAIN_ID_NAME ), "chain ID to connect to")
 //#endif
          ;
       vector<string> allowed_ips;
