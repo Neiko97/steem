@@ -1,4 +1,3 @@
-
 #include <steem/protocol/transaction.hpp>
 #include <steem/protocol/transaction_util.hpp>
 
