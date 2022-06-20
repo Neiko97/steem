@@ -24,6 +24,8 @@
 
 #define STEEM_GENESIS_TIME                    (fc::time_point_sec(1451606400))
 #define STEEM_MINING_TIME                     (fc::time_point_sec(1451606400))
+
+/* time window for voting of witnesses (posts and comments)*/
 #define STEEM_CASHOUT_WINDOW_SECONDS          (60*60) /// 1 hr
 #define STEEM_CASHOUT_WINDOW_SECONDS_PRE_HF12 (STEEM_CASHOUT_WINDOW_SECONDS)
 #define STEEM_CASHOUT_WINDOW_SECONDS_PRE_HF17 (STEEM_CASHOUT_WINDOW_SECONDS)
@@ -50,7 +52,7 @@
 #define STEEM_BLOCKCHAIN_VERSION              ( version(0, 19, 10) )
 
 /* Public key of the first user in the forked blockchain */
-#define STEEM_INIT_PUBLIC_KEY_STR             "EUR8GC13uCZbP44HzMLV6zPZGwVQ8Nt4Kji8PapsPiNq1BK153XTX"
+#define STEEM_INIT_PUBLIC_KEY_STR             "EUR8PsyH8FSX7VPKg3ecKLD4khpkrUTYLJeWYcN8h2fJyhVnd1iHf"
 /* chain id is a unique identifier for the blockchain, to prevent replay transaction between different chains, 
  * will change the name of the chain. */
 #define STEEM_CHAIN_ID_NAME "europe"
@@ -155,6 +157,7 @@
 
 #define STEEM_MAX_RESERVE_RATIO               (20000)
 
+/* Account creation fees */ 
 #define STEEM_CREATE_ACCOUNT_WITH_STEEM_MODIFIER 30
 #define STEEM_CREATE_ACCOUNT_DELEGATION_RATIO    5
 #define STEEM_CREATE_ACCOUNT_DELEGATION_TIME     fc::days(30)

@@ -27,10 +27,7 @@
 #define STEEM_ASSET_NUM_VESTS \
   (((SMT_MAX_NAI + STEEM_NAI_VESTS) << STEEM_ASSET_SYMBOL_PRECISION_BITS) | STEEM_PRECISION_VESTS)
 
-/**
- * @brief steem token definition. changed from STEEM to EFTG and SBD to EUR
- * 
- */
+/* steem token definition. Changed from STEEM to EFTG and SBD to EUR */
 
 #ifdef IS_TEST_NET
 
@@ -41,9 +38,9 @@
 
 #else
 
-#define VESTS_SYMBOL_U64  (uint64_t('V') | (uint64_t('E') << 8) | (uint64_t('S') << 16) | (uint64_t('T') << 24) | (uint64_t('S') << 32))
-#define STEEM_SYMBOL_U64  (uint64_t('E') | (uint64_t('F') << 8) | (uint64_t('T') << 16) | (uint64_t('G') << 24))
-#define SBD_SYMBOL_U64    (uint64_t('E') | (uint64_t('U') << 8) | (uint64_t('R') << 16))
+#define VESTS_SYMBOL_U64  (uint64_t(6) | (uint64_t('V') << 8) | (uint64_t('E') << 16) | (uint64_t('S') << 24)| (uint64_t('T') << 32) | (uint64_t('S') << 40))
+#define STEEM_SYMBOL_U64  (uint64_t(3) | (uint64_t('E') << 8) | (uint64_t('F') << 16) | (uint64_t('T') << 24)| (uint64_t('G') << 32))
+#define SBD_SYMBOL_U64    (uint64_t(3) | (uint64_t('E') << 8) | (uint64_t('U') << 16) | (uint64_t('R') << 24))
 
 #endif
 
