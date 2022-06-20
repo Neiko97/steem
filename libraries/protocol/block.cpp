@@ -39,6 +39,13 @@ namespace steem { namespace protocol {
       return signee() == expected_signee;
    }
 
+   /**
+    * @brief Calcule le hash principale (hash de chaque sous hash), ainsi il est plus simple e verifier 
+    * les données sur l'arbre de merkle
+    * Les racines merkle se rassurent qu'un block de données a bien été passée entre les paires (peers) 
+    * dans un réseaux pair à pair (p2p), c-à-d sans avoir été modifié, cassé.  
+    * @return checksum_type : le hash généré en format ripemd_160
+    */
    checksum_type signed_block::calculate_merkle_root()const
    {
       if( transactions.size() == 0 )

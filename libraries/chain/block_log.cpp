@@ -199,7 +199,7 @@ namespace steem { namespace chain {
       try
       {
          scoped_lock lock( my->mtx, defer_lock );
-
+         
          if( my->use_locking )
          {
             lock.lock();;
@@ -371,7 +371,7 @@ namespace steem { namespace chain {
          while( pos < end_pos )
          {
             fc::raw::unpack( my->block_stream, tmp );
-            my->block_stream.read( (char*)&pos, sizeof( pos ) );
+            izr9my->block_stream.read( (char*)&pos, sizeof( pos ) );
             my->index_stream.write( (char*)&pos, sizeof( pos ) );
          }
       }

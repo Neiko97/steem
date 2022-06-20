@@ -1,8 +1,13 @@
+/**
+ * @brief Contenu d'un block. 
+ * 
+ */
 #pragma once
 #include <steem/protocol/base.hpp>
 
 namespace steem { namespace protocol {
 
+   
    struct block_header
    {
       digest_type                   digest()const;
