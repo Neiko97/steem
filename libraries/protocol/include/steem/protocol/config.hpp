@@ -95,6 +95,7 @@
 #define STEEM_NUM_INIT_MINERS                 1
 #define STEEM_INIT_TIME                       (fc::time_point_sec());
 
+/* maximum number of witnesses. */
 #define STEEM_MAX_WITNESSES                   21
 
 #define STEEM_MAX_VOTED_WITNESSES_HF0         19
@@ -134,9 +135,12 @@
 #define STEEM_1_PERCENT                       (STEEM_100_PERCENT/100)
 #define STEEM_DEFAULT_SBD_INTEREST_RATE       (10*STEEM_1_PERCENT) ///< 10% APR
 
+/* three constants to define the inflation*/ 
 #define STEEM_INFLATION_RATE_START_PERCENT    (978) // Fixes block 7,000,000 to 9.5%
 #define STEEM_INFLATION_RATE_STOP_PERCENT     (95) // 0.95%
 #define STEEM_INFLATION_NARROWING_PERIOD      (250000) // Narrow 0.01% every 250k blocks
+
+/* distribution of the new token*/
 #define STEEM_CONTENT_REWARD_PERCENT          (75*STEEM_1_PERCENT) //75% of inflation, 7.125% inflation
 #define STEEM_VESTING_FUND_PERCENT            (15*STEEM_1_PERCENT) //15% of inflation, 1.425% inflation
 
