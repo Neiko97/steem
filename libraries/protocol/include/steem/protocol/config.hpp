@@ -1,6 +1,6 @@
 /**
  * @file config.hpp
- * @brief Configuration file for steemit caracteristics like the name of the token. 
+ * @brief Configuration file for steemit caracteristics like the name of the token, the inflation rate, etc. 
  * 
  * @copyright Copyright (c) 2016 Steemit, Inc., and contributors.
  * 
