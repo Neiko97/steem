@@ -1,7 +1,7 @@
 #!/bin/bash
 
 echo "Make sure to be in the stable branch before continuing"
-
+git submodule update --init --recursive
 echo -n "For full node, type 'f'. For seed node, press 's': "
 read node
 
