@@ -13,6 +13,8 @@ case $node in
     cd ../build_eftg
     cmake -DCMAKE_BUILD_TYPE=Release -DLOW_MEMORY_NODE=OFF ..
     make steemd
+    make cli_wallet
+
     cd ../ciscripts
     sh config_full.sh
     echo "Process finished with success"
@@ -23,6 +25,7 @@ case $node in
     cd ../build_eftg
     cmake -DCMAKE_BUILD_TYPE=Release -DLOW_MEMORY_NODE=ON ..
     make steemd
+    make cli_wallet
     cd ../ciscripts
     sh config_seed.sh
     echo "Process finished with success"
