@@ -1,7 +1,9 @@
 #!/bin/bash
 
 echo "Make sure to be in the stable branch before continuing"
+cd ..
 git submodule update --init --recursive
+cd ciscripts
 echo -n "For full node, type 'f'. For seed node, press 's': "
 read node
 
