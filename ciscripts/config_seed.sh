@@ -14,10 +14,10 @@ echo "Enter trusted seed-node (press enter to skip and use default seed node) ke
 read seed
 
 
-echo "rpc-endpoint = 127.0.0.1:9876
+echo "rpc-endpoint = 127.0.0.1:8090
 p2p-endpoint = 0.0.0.0:2001
 enable-stale-production = true
-witness = "$witness"
+witness = ""$witness""
 private-key = $key" > ../build_eftg/programs/steemd/$first_name/config.ini
 
 
